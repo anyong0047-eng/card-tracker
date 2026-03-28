@@ -475,14 +475,10 @@ body.light .value-total{background:rgba(184,138,0,.07);}
   <div class="sync-dot" id="syncDot"></div>
   <span id="syncStatus">동기화 비활성</span>
   <div class="sync-code-wrap">
-    <span style="color:var(--muted);font-size:0.62rem;">코드:</span>
-    <input class="sync-code-input" id="syncCodeInput" maxlength="8" placeholder="ABCD1234" title="공유 코드 (최대 8자)">
-    <button class="sync-btn primary" onclick="activateSync()">연결</button>
-    <button class="sync-btn" onclick="generateSyncCode()">새 코드</button>
-    <button class="sync-btn" onclick="pushSync()">↑ 업로드</button>
+    <button class="sync-btn primary" onclick="pushSync()">↑ 업로드 &amp; 링크 복사</button>
     <button class="sync-btn" onclick="pullSync()">↓ 다운로드</button>
   </div>
-  <span style="font-size:0.6rem;color:var(--muted);font-style:italic;">같은 코드를 다른 기기에서 입력하면 데이터가 공유됩니다</span>
+  <span style="font-size:0.6rem;color:var(--muted);font-style:italic;">업로드 후 링크를 다른 기기에서 열면 동기화됩니다</span>
 </div>
 
 <!-- ── PERIOD TOOLBAR ── -->
@@ -605,7 +601,7 @@ function defaultState(){
     activation:{}, period:'all', missed:false, view:'card',
     selBenefit:null, collapsed:[], notes:{},
     selectedYear:new Date().getFullYear(),
-    theme:'dark', syncCode:'', syncBarOpen:false
+    theme:'dark', syncBinId:'', syncBarOpen:false
   };
 }
 function loadSt(){
@@ -618,7 +614,7 @@ function loadSt(){
       missed:r.missed||false, view:r.view||'card',
       selBenefit:r.selBenefit||null, collapsed:r.collapsed||[],
       notes:r.notes||{}, selectedYear:r.selectedYear||d.selectedYear,
-      theme:r.theme||'dark', syncCode:r.syncCode||'', syncBarOpen:r.syncBarOpen||false
+      theme:r.theme||'dark', syncBinId:r.syncBinId||'', syncBarOpen:r.syncBarOpen||false
     };
   }catch(e){return defaultState();}
 }
@@ -913,7 +909,7 @@ function exportCSV(){
 }
 
 // ═══════════════════════════════════════════════════════
-//  SYNC (JSONBin.io)
+//  SYNC (JSONBin.io — 링크 공유 방식)
 // ═══════════════════════════════════════════════════════
 const JSONBIN_API_KEY='$2a$10$p6I8pCsvIduNMaDA8l6vpeO.B2kf/YPfCnwGc5cCdpt6tdypFAczi';
 const JSONBIN_BASE='https://api.jsonbin.io/v3';
@@ -924,54 +920,24 @@ function setSyncStatus(state,text){
   dot.className='sync-dot'+(state?' '+state:'');
   status.textContent=text;
 }
-let _syncTimer=null;
-function syncDebounce(){
-  if(!S.syncCode)return;
-  clearTimeout(_syncTimer);
-  _syncTimer=setTimeout(()=>pushSync(true),3000);
-}
-
-function generateSyncCode(){
-  const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let code='';for(let i=0;i<6;i++)code+=chars[Math.floor(Math.random()*chars.length)];
-  document.getElementById('syncCodeInput').value=code;
-}
 
 function toggleSyncBar(){
   S.syncBarOpen=!S.syncBarOpen;
   document.getElementById('syncBar').classList.toggle('hidden',!S.syncBarOpen);
-  if(S.syncBarOpen&&S.syncCode)document.getElementById('syncCodeInput').value=S.syncCode;
   saveSt();
 }
 
-function activateSync(){
-  const code=document.getElementById('syncCodeInput').value.trim().toUpperCase();
-  if(code.length<4){alert('코드는 4자 이상 입력하세요.');return;}
-  S.syncCode=code;saveSt();
-  setSyncStatus('busy','연결 중…');
-  pullSync();
+// URL에서 bin ID 읽기 (다른 기기에서 링크로 접근할 때)
+function getBinIdFromUrl(){
+  const m=location.hash.match(/bin=([A-Za-z0-9]+)/);
+  return m?m[1]:null;
 }
 
-// 코드 → JSONBin bin ID 매핑을 위해 bin name에 코드를 저장
-async function findBinByCode(code){
-  try{
-    const r=await fetch(`${JSONBIN_BASE}/b?meta=false`,{
-      headers:{'X-Master-Key':JSONBIN_API_KEY}
-    });
-    if(!r.ok)return null;
-    const bins=await r.json();
-    const found=(bins.result||[]).find(b=>b.snippetMeta&&b.snippetMeta.name===`card-tracker-${code}`);
-    return found?found.id:null;
-  }catch(e){return null;}
-}
-
-async function pushSync(silent=false){
-  if(!S.syncCode){if(!silent)alert('먼저 동기화 코드를 연결하세요.');return;}
+async function pushSync(){
   setSyncStatus('busy','업로드 중…');
   try{
     const payload={...S,collapsed:[...collSet]};
-    // bin ID가 저장되어 있으면 업데이트, 없으면 새로 생성
-    let binId=S.syncBinId||null;
+    let binId=S.syncBinId||getBinIdFromUrl()||null;
     if(!binId){
       // 새 bin 생성
       const r=await fetch(`${JSONBIN_BASE}/b`,{
@@ -979,7 +945,7 @@ async function pushSync(silent=false){
         headers:{
           'Content-Type':'application/json',
           'X-Master-Key':JSONBIN_API_KEY,
-          'X-Bin-Name':`card-tracker-${S.syncCode}`,
+          'X-Bin-Name':'card-tracker',
           'X-Bin-Private':'true'
         },
         body:JSON.stringify(payload)
@@ -989,46 +955,38 @@ async function pushSync(silent=false){
       binId=data.metadata.id;
       S.syncBinId=binId;
       saveSt();
+      history.replaceState(null,'',location.pathname+'#bin='+binId);
     } else {
-      // 기존 bin 업데이트
       const r=await fetch(`${JSONBIN_BASE}/b/${binId}`,{
         method:'PUT',
-        headers:{
-          'Content-Type':'application/json',
-          'X-Master-Key':JSONBIN_API_KEY
-        },
+        headers:{'Content-Type':'application/json','X-Master-Key':JSONBIN_API_KEY},
         body:JSON.stringify(payload)
       });
       if(!r.ok)throw new Error(r.status);
     }
-    setSyncStatus('ok',`업로드 완료 · ${new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})}`);
+    // 링크 클립보드 복사
+    const shareUrl=location.origin+location.pathname+'#bin='+binId;
+    try{await navigator.clipboard.writeText(shareUrl);}catch(e){}
+    setSyncStatus('ok',`업로드 완료 · 링크 복사됨 ✓`);
+    setTimeout(()=>setSyncStatus('ok',`연결됨 (bin: ${binId.slice(0,8)}…)`),2500);
   }catch(e){setSyncStatus('err','업로드 실패 — 네트워크 확인');}
 }
 
 async function pullSync(){
-  if(!S.syncCode){alert('먼저 동기화 코드를 연결하세요.');return;}
+  const binId=S.syncBinId||getBinIdFromUrl()||null;
+  if(!binId){
+    setSyncStatus('err','링크 없음 — 먼저 다른 기기에서 업로드하세요');
+    return;
+  }
   setSyncStatus('busy','다운로드 중…');
   try{
-    let binId=S.syncBinId||null;
-    if(!binId){
-      // bin 목록에서 코드로 찾기
-      const r=await fetch(`${JSONBIN_BASE}/b?meta=false`,{
-        headers:{'X-Master-Key':JSONBIN_API_KEY}
-      });
-      if(!r.ok)throw new Error(r.status);
-      const bins=await r.json();
-      const found=(bins.result||[]).find(b=>b.snippetMeta&&b.snippetMeta.name===`card-tracker-${S.syncCode}`);
-      if(!found){setSyncStatus('ok','코드 연결됨 (데이터 없음 — 먼저 업로드하세요)');return;}
-      binId=found.id;
-      S.syncBinId=binId;
-      saveSt();
-    }
     const r=await fetch(`${JSONBIN_BASE}/b/${binId}/latest`,{
       headers:{'X-Master-Key':JSONBIN_API_KEY}
     });
     if(!r.ok)throw new Error(r.status);
     const data=await r.json();
     const remote=data.record;
+    S.syncBinId=binId;
     Object.assign(S,{
       checks:remote.checks||S.checks,
       people:remote.people||S.people,
@@ -1039,13 +997,20 @@ async function pullSync(){
       view:remote.view||S.view,
       selBenefit:remote.selBenefit??S.selBenefit,
       selectedYear:remote.selectedYear||S.selectedYear,
-      syncBinId:remote.syncBinId||binId
+      syncBinId:binId
     });
     if(remote.collapsed)(remote.collapsed).forEach(id=>collSet.add(id));
     saveSt();renderAll();buildYearSelect();
     setSyncStatus('ok',`다운로드 완료 · ${new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})}`);
   }catch(e){setSyncStatus('err','다운로드 실패 — 네트워크 확인');}
 }
+
+// 페이지 로드 시 URL에 bin ID 있으면 자동 다운로드
+(function(){
+  const binId=getBinIdFromUrl();
+  if(binId&&!S.syncBinId){S.syncBinId=binId;saveSt();pullSync();}
+  else if(S.syncBinId){setSyncStatus('ok',`연결됨 (bin: ${S.syncBinId.slice(0,8)}…)`);}
+})();
 
 // ═══════════════════════════════════════════════════════
 //  PWA — INSTALL
@@ -1406,17 +1371,13 @@ document.getElementById('cardView').style.display=S.view==='card'?'block':'none'
 document.getElementById('benefitView').style.display=S.view==='benefit'?'block':'none';
 if(S.syncBarOpen){
   document.getElementById('syncBar').classList.remove('hidden');
-  if(S.syncCode)document.getElementById('syncCodeInput').value=S.syncCode;
 }
-if(S.syncCode)setSyncStatus('ok',`코드: ${S.syncCode} (연결됨)`);
 setPeriod(S.period);
 renderAll();
 
 document.querySelectorAll('.modal-overlay').forEach(el=>{
   el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('open');});
 });
-// Enter key in sync code input
-document.getElementById('syncCodeInput').addEventListener('keydown',e=>{if(e.key==='Enter')activateSync();});
 </script>
 </body>
 </html>
