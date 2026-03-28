@@ -966,9 +966,13 @@ async function pushSync(){
     }
     // 링크 클립보드 복사
     const shareUrl=location.origin+location.pathname+'#bin='+binId;
-    try{await navigator.clipboard.writeText(shareUrl);}catch(e){}
-    setSyncStatus('ok',`업로드 완료 · 링크 복사됨 ✓`);
-    setTimeout(()=>setSyncStatus('ok',`연결됨 (bin: ${binId.slice(0,8)}…)`),2500);
+    let copied=false;
+    try{await navigator.clipboard.writeText(shareUrl);copied=true;}catch(e){}
+    if(!copied){
+      prompt('이 링크를 아이폰에서 열면 동기화됩니다:', shareUrl);
+    }
+    setSyncStatus('ok',`업로드 완료 · ${copied?'링크 복사됨 ✓':'링크를 확인하세요'}`);
+    setTimeout(()=>setSyncStatus('ok',`연결됨 · bin: ${binId.slice(0,8)}…`),2500);
   }catch(e){setSyncStatus('err','업로드 실패 — 네트워크 확인');}
 }
 
@@ -1008,8 +1012,14 @@ async function pullSync(){
 // 페이지 로드 시 URL에 bin ID 있으면 자동 다운로드
 (function(){
   const binId=getBinIdFromUrl();
-  if(binId&&!S.syncBinId){S.syncBinId=binId;saveSt();pullSync();}
-  else if(S.syncBinId){setSyncStatus('ok',`연결됨 (bin: ${S.syncBinId.slice(0,8)}…)`);}
+  if(binId){
+    S.syncBinId=binId;S.syncBarOpen=true;saveSt();
+    document.getElementById('syncBar').classList.remove('hidden');
+    pullSync();
+  } else if(S.syncBinId){
+    if(S.syncBarOpen)document.getElementById('syncBar').classList.remove('hidden');
+    setSyncStatus('ok',`연결됨 · bin: ${S.syncBinId.slice(0,8)}…`);
+  }
 })();
 
 // ═══════════════════════════════════════════════════════
