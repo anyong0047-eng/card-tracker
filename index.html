@@ -1,0 +1,1422 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" id="themeColorMeta" content="#0d0d12">
+<meta name="description" content="카드 혜택 트래커 - 신용카드 혜택을 놓치지 마세요">
+<link rel="manifest" id="manifestLink">
+<title>카드 트래커</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+/* ── DARK (default) ── */
+:root {
+  --bg:#0d0d12; --surface:#15151e; --surface2:#1c1c28; --surface3:#22222f;
+  --border:#262636; --text:#e8e8f0; --muted:#5a5a8a; --muted2:#3a3a5a;
+  --green:#06d6a0; --p1:#7c6fff; --p2:#ff6b8a; --gold:#ffd166;
+  --orange:#ff9f43; --alert:#ff4757; --blue:#38b4ff;
+  --note-bg:rgba(255,209,102,.06); --note-border:rgba(255,209,102,.3);
+  --shadow:rgba(0,0,0,.4);
+}
+/* ── LIGHT ── */
+body.light {
+  --bg:#f4f4f8; --surface:#ffffff; --surface2:#eeeef5; --surface3:#e4e4ee;
+  --border:#d0d0e0; --text:#1a1a2e; --muted:#7070a0; --muted2:#a0a0c0;
+  --green:#059a74; --p1:#5b4fd9; --p2:#d94f6e; --gold:#b88a00;
+  --orange:#c47020; --alert:#cc2233; --blue:#1a7fcc;
+  --note-bg:rgba(184,138,0,.07); --note-border:rgba(184,138,0,.35);
+  --shadow:rgba(0,0,0,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;overscroll-behavior:none;transition:background .25s,color .25s;}
+
+/* ── HEADER ── */
+header{
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;
+  padding:10px 20px;background:var(--surface);border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:200;gap:8px;box-shadow:0 2px 8px var(--shadow);
+  transition:background .25s,border-color .25s;
+}
+.logo{font-family:'Bebas Neue',cursive;font-size:1.4rem;letter-spacing:3px;
+  background:linear-gradient(135deg,var(--p1),var(--p2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;flex-shrink:0;}
+.header-center{display:flex;gap:5px;align-items:center;flex-wrap:wrap;}
+.hbtn{
+  font-family:'DM Sans',sans-serif;font-size:0.68rem;font-weight:600;
+  letter-spacing:.6px;text-transform:uppercase;
+  padding:6px 12px;border-radius:999px;cursor:pointer;
+  border:1px solid var(--border);background:var(--surface2);color:var(--muted);
+  transition:all .18s;white-space:nowrap;position:relative;
+}
+.hbtn:hover{border-color:var(--p1);color:var(--text);}
+.hbtn.active{background:linear-gradient(135deg,rgba(124,111,255,.22),rgba(255,107,138,.22));border-color:var(--p1);color:var(--text);}
+body.light .hbtn.active{background:linear-gradient(135deg,rgba(91,79,217,.15),rgba(217,79,110,.15));}
+.hbtn.warn{border-color:rgba(255,159,67,.5);color:var(--orange);}
+.hbtn.warn.active{background:rgba(255,159,67,.15);border-color:var(--orange);color:var(--orange);}
+/* badge on button */
+.hbtn .badge{
+  position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;
+  background:var(--alert);color:#fff;font-size:0.5rem;font-weight:700;
+  border-radius:999px;display:flex;align-items:center;justify-content:center;
+  padding:0 3px;border:2px solid var(--surface);line-height:1;
+}
+.header-right{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.legend{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+.leg{display:flex;align-items:center;gap:5px;font-size:0.72rem;}
+.leg-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+
+/* Icon buttons */
+.icon-btn{
+  width:32px;height:32px;border-radius:999px;border:1px solid var(--border);
+  background:var(--surface2);color:var(--muted);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:0.95rem;
+  transition:all .18s;flex-shrink:0;
+}
+.icon-btn:hover{border-color:var(--p1);color:var(--text);}
+
+/* Year selector */
+.year-select{
+  font-family:'DM Sans',sans-serif;font-size:0.72rem;color:var(--text);
+  background:var(--surface2);border:1px solid var(--border);
+  padding:5px 10px;border-radius:999px;cursor:pointer;outline:none;
+  transition:border-color .18s,background .25s;appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%235a5a8a'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 9px center;padding-right:26px;
+}
+.year-select:hover,.year-select:focus{border-color:var(--p1);}
+.year-select option{background:var(--surface2);color:var(--text);}
+
+/* ── SYNC BAR ── */
+#syncBar{
+  display:flex;gap:8px;align-items:center;flex-wrap:wrap;
+  padding:7px 20px;background:var(--surface3);border-bottom:1px solid var(--border);
+  font-size:0.63rem;color:var(--muted);transition:all .25s;
+}
+#syncBar.hidden{display:none;}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--muted);flex-shrink:0;}
+.sync-dot.ok{background:var(--green);}
+.sync-dot.busy{background:var(--gold);animation:pulse 1s infinite;}
+.sync-dot.err{background:var(--alert);}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+.sync-code-wrap{display:flex;gap:6px;align-items:center;}
+.sync-code-input{
+  width:90px;background:var(--surface2);border:1px solid var(--border);
+  border-radius:6px;color:var(--text);padding:3px 8px;
+  font-size:0.65rem;font-family:monospace;outline:none;
+  text-transform:uppercase;letter-spacing:1px;
+}
+.sync-code-input:focus{border-color:var(--p1);}
+.sync-btn{
+  font-size:0.62rem;font-weight:600;padding:3px 9px;border-radius:5px;
+  border:1px solid var(--border);background:var(--surface2);color:var(--muted);
+  cursor:pointer;transition:all .13s;white-space:nowrap;
+}
+.sync-btn:hover{border-color:var(--p1);color:var(--p1);}
+.sync-btn.primary{border-color:var(--green);color:var(--green);background:rgba(6,214,160,.08);}
+.sync-btn.primary:hover{background:rgba(6,214,160,.18);}
+
+/* ── TOOLBAR ── */
+.toolbar{
+  display:flex;gap:7px;align-items:center;flex-wrap:wrap;
+  padding:9px 20px;background:var(--surface2);border-bottom:1px solid var(--border);
+  transition:background .25s;
+}
+.toolbar-label{font-size:0.62rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-right:2px;flex-shrink:0;}
+.tbtn{
+  font-size:0.66rem;font-weight:600;padding:4px 10px;border-radius:999px;
+  border:1px solid var(--border);background:var(--bg);color:var(--muted);
+  cursor:pointer;transition:all .15s;white-space:nowrap;
+}
+.tbtn:hover{border-color:var(--gold);color:var(--gold);}
+.tbtn.active{background:rgba(255,209,102,.12);border-color:var(--gold);color:var(--gold);}
+body.light .tbtn.active{background:rgba(184,138,0,.1);}
+.toolbar-sep{width:1px;height:16px;background:var(--border);margin:0 2px;flex-shrink:0;}
+#periodHint{font-size:0.62rem;color:var(--muted);font-style:italic;}
+
+main{padding:14px 20px;max-width:1400px;margin:0 auto;}
+
+/* ── URGENT BANNER ── */
+#urgentBanner{display:none;margin-bottom:12px;}
+.urgent-banner{
+  background:rgba(255,71,87,.1);border:1px solid rgba(255,71,87,.35);
+  border-radius:12px;padding:10px 14px;display:flex;align-items:flex-start;gap:10px;
+}
+body.light .urgent-banner{background:rgba(204,34,51,.08);}
+.urgent-banner-icon{font-size:1.1rem;flex-shrink:0;margin-top:1px;}
+.urgent-banner-content{flex:1;}
+.urgent-banner-title{font-size:0.68rem;font-weight:700;color:var(--alert);letter-spacing:.5px;margin-bottom:4px;}
+.urgent-item{font-size:0.64rem;color:var(--text);padding:2px 0;display:flex;gap:6px;align-items:center;}
+.urgent-item::before{content:'•';color:var(--alert);}
+.urgent-close{font-size:0.65rem;color:var(--muted);background:none;border:none;cursor:pointer;padding:2px;flex-shrink:0;}
+
+/* ── STATS ── */
+.stats-row{display:flex;gap:9px;margin-bottom:14px;flex-wrap:wrap;}
+.stat-pill{background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:9px 14px;flex:1;min-width:100px;transition:background .25s,border-color .25s;}
+.stat-pill-label{font-size:0.58rem;text-transform:uppercase;letter-spacing:1.1px;color:var(--muted);margin-bottom:3px;}
+.stat-pill-val{font-family:'Bebas Neue',cursive;font-size:1.5rem;letter-spacing:1px;}
+.stat-pill-sub{font-size:0.6rem;color:var(--muted);margin-top:1px;}
+
+/* ── CARDS GRID ── */
+.cards-grid{display:grid;gap:12px;}
+.card-block{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;transition:border-color .2s,background .25s;}
+.card-block:hover{border-color:rgba(124,111,255,.35);}
+.card-header{display:flex;align-items:center;justify-content:space-between;
+  padding:12px 18px;cursor:pointer;background:var(--surface2);
+  border-bottom:1px solid var(--border);user-select:none;transition:background .15s;}
+.card-header:hover{background:var(--surface3);}
+.card-name{font-family:'Bebas Neue',cursive;font-size:1.15rem;letter-spacing:2px;display:flex;align-items:center;gap:8px;}
+.card-right{display:flex;align-items:center;gap:10px;}
+.mini-progs{display:flex;flex-direction:column;gap:3px;}
+.mini-prog-row{display:flex;align-items:center;gap:5px;}
+.mini-prog-label{font-size:0.57rem;font-weight:700;min-width:20px;}
+.mini-prog-bar{width:60px;height:3px;background:var(--border);border-radius:2px;overflow:hidden;}
+.mini-prog-fill{height:100%;border-radius:2px;transition:width .4s;}
+.mini-prog-pct{font-size:0.57rem;color:var(--muted);min-width:26px;text-align:right;}
+.chevron{color:var(--muted);font-size:0.65rem;transition:transform .25s;margin-left:4px;}
+.collapsed .chevron{transform:rotate(-90deg);}
+.collapsed .card-body,.collapsed .activation-bar{display:none;}
+.card-body{padding:13px 18px;}
+
+/* ── EXPIRY BADGE ── */
+.expiry-badge{
+  font-size:0.52rem;font-weight:700;padding:2px 6px;border-radius:4px;
+  background:rgba(255,71,87,.15);color:var(--alert);border:1px solid rgba(255,71,87,.3);
+  letter-spacing:.3px;flex-shrink:0;animation:badgePulse 2s ease-in-out infinite;
+}
+@keyframes badgePulse{0%,100%{opacity:1;}50%{opacity:.6;}}
+
+/* ── ACTIVATION BAR ── */
+.activation-bar{
+  display:flex;gap:6px;align-items:center;padding:7px 18px;
+  background:rgba(0,0,0,.1);border-bottom:1px solid var(--border);flex-wrap:wrap;
+  transition:background .25s;
+}
+body.light .activation-bar{background:rgba(0,0,0,.04);}
+.act-label{font-size:0.57rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-right:2px;}
+.act-btn{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:0.62rem;font-weight:700;padding:4px 10px;border-radius:999px;
+  border:1px solid var(--border);background:var(--bg);color:var(--muted);
+  cursor:pointer;transition:all .14s;user-select:none;
+}
+.act-btn.on{background:rgba(6,214,160,.08);}
+.act-btn.off{opacity:.5;}
+
+/* ── BENEFIT SECTION ── */
+.benefit-section{margin-bottom:14px;}
+.benefit-section:last-child{margin-bottom:0;}
+.benefit-label{font-size:0.59rem;text-transform:uppercase;letter-spacing:1.3px;color:var(--muted);
+  padding-bottom:6px;margin-bottom:6px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:wrap;}
+.benefit-label-left{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.benefit-label-right{display:flex;align-items:center;gap:5px;flex-shrink:0;}
+.amount-tag{font-family:'DM Sans',sans-serif;background:rgba(255,209,102,.12);color:var(--gold);
+  border-radius:4px;padding:1px 6px;font-size:0.59rem;text-transform:none;letter-spacing:0;font-weight:600;}
+body.light .amount-tag{background:rgba(184,138,0,.1);}
+.benefit-note{font-size:0.62rem;color:var(--muted);border-left:2px solid var(--gold);
+  padding:2px 7px;margin-top:5px;font-style:italic;}
+.player-rows{display:flex;flex-direction:column;gap:5px;}
+
+/* ── NOTE BUTTON ── */
+.note-btn{
+  font-size:0.56rem;padding:2px 7px;border-radius:4px;cursor:pointer;
+  border:1px solid var(--note-border);background:var(--note-bg);color:var(--gold);
+  transition:all .14s;white-space:nowrap;flex-shrink:0;
+}
+.note-btn:hover{background:rgba(255,209,102,.14);border-color:var(--gold);}
+.note-btn.has-note{background:rgba(255,209,102,.15);border-color:var(--gold);}
+body.light .note-btn.has-note{background:rgba(184,138,0,.1);}
+
+/* ── NOTE DISPLAY ── */
+.benefit-user-note{
+  margin-top:6px;border-radius:8px;
+  border:1px solid var(--note-border);background:var(--note-bg);overflow:hidden;
+}
+.note-content-area{padding:7px 10px;}
+.note-text-display{font-size:0.68rem;color:var(--gold);line-height:1.5;white-space:pre-wrap;word-break:break-word;}
+
+/* ── PLAYER ROW ── */
+.pr{display:flex;align-items:center;gap:8px;}
+.pr.na{opacity:.13;pointer-events:none;filter:grayscale(1);}
+.pr-label{font-size:0.63rem;font-weight:700;min-width:20px;flex-shrink:0;}
+
+/* MONTH CELLS */
+.months-wrap{display:flex;gap:3px;flex:1;overflow-x:auto;padding-bottom:2px;-webkit-overflow-scrolling:touch;}
+.mcell{flex:1;min-width:30px;height:34px;border-radius:7px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  cursor:pointer;transition:all .12s;user-select:none;
+  border:1px solid var(--border);background:var(--surface2);color:var(--muted);
+  font-size:0.53rem;gap:1px;position:relative;}
+.mcell:hover{border-color:var(--p1);color:var(--text);transform:translateY(-1px);}
+.mcell.missed{background:rgba(255,71,87,.1);border-color:rgba(255,71,87,.4);color:var(--alert);}
+.mcell.urgent-cell{border-color:rgba(255,159,67,.6);background:rgba(255,159,67,.08);}
+.m-mo{font-size:0.56rem;}
+.m-amt{font-size:0.51rem;opacity:.8;}
+.m-check{position:absolute;top:1px;right:3px;font-size:0.42rem;}
+
+/* PERIOD CELLS */
+.periods-wrap{display:flex;gap:5px;flex-wrap:wrap;flex:1;}
+.pcell{display:flex;align-items:center;gap:5px;padding:5px 10px;
+  border-radius:8px;border:1px solid var(--border);background:var(--surface2);
+  cursor:pointer;transition:all .12s;font-size:0.68rem;color:var(--muted);user-select:none;}
+.pcell:hover{border-color:var(--p1);color:var(--text);}
+.pcell.missed{background:rgba(255,71,87,.1);border-color:rgba(255,71,87,.4);color:var(--alert);}
+.pcell.urgent-cell{border-color:rgba(255,159,67,.6);background:rgba(255,159,67,.08);}
+.pcell-cb{font-size:0.82rem;}
+
+/* ANNUAL CELLS */
+.annual-wrap{flex:1;}
+.annual-cell{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;
+  border-radius:8px;border:1px solid var(--border);background:var(--surface2);
+  cursor:pointer;transition:all .12s;font-size:0.71rem;color:var(--muted);user-select:none;}
+.annual-cell:hover{border-color:var(--p1);color:var(--text);}
+.info-row{font-size:0.7rem;color:var(--muted);font-style:italic;padding:3px 0;}
+
+/* ── BENEFIT VIEW ── */
+#benefitView{display:none;}
+.bv-filter-bar{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px;}
+.bfbtn{font-size:0.66rem;font-weight:600;padding:5px 11px;border-radius:999px;
+  border:1px solid var(--border);background:var(--surface2);color:var(--muted);
+  cursor:pointer;transition:all .14s;}
+.bfbtn:hover{border-color:var(--p1);color:var(--text);}
+.bfbtn.active{background:rgba(124,111,255,.18);border-color:var(--p1);color:var(--p1);}
+body.light .bfbtn.active{background:rgba(91,79,217,.12);}
+.bv-grid{display:grid;gap:12px;}
+.bv-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
+.bv-card-head{display:flex;align-items:center;justify-content:space-between;
+  padding:10px 16px;background:var(--surface2);border-bottom:1px solid var(--border);}
+.bv-card-name{font-family:'Bebas Neue',cursive;font-size:1.05rem;letter-spacing:2px;display:flex;align-items:center;gap:8px;}
+.type-badge{font-family:'DM Sans',sans-serif;font-size:0.54rem;font-weight:700;
+  text-transform:uppercase;letter-spacing:.8px;padding:2px 6px;border-radius:4px;}
+.badge-monthly{background:rgba(6,214,160,.1);color:var(--green);}
+.badge-period{background:rgba(255,209,102,.1);color:var(--gold);}
+.badge-annual{background:rgba(124,111,255,.1);color:var(--p1);}
+.bv-card-body{padding:12px 16px;}
+.card-entry{margin-bottom:12px;}
+.card-entry:last-child{margin-bottom:0;}
+.card-entry-name{font-size:0.58rem;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);
+  padding-bottom:6px;margin-bottom:6px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+
+/* ── MODALS ── */
+.modal-overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;
+  align-items:flex-end;justify-content:center;
+}
+@media(min-width:600px){.modal-overlay{align-items:center;}}
+.modal-overlay.open{display:flex;}
+.modal{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:20px 20px 0 0;
+  padding:22px;width:100%;max-width:460px;max-height:88vh;overflow-y:auto;
+  transition:background .25s;
+}
+@media(min-width:600px){.modal{border-radius:20px;}}
+.modal-title{font-family:'Bebas Neue',cursive;font-size:1.3rem;letter-spacing:2px;margin-bottom:16px;
+  background:linear-gradient(135deg,var(--p1),var(--p2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.person-row{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:10px;
+  border:1px solid var(--border);background:var(--surface2);margin-bottom:7px;}
+.person-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.person-name{flex:1;font-size:0.82rem;font-weight:600;}
+.person-tag{font-size:0.57rem;color:var(--muted);background:var(--bg);
+  border:1px solid var(--border);padding:2px 7px;border-radius:4px;}
+.person-del{font-size:0.71rem;color:var(--muted);background:none;border:1px solid var(--border);
+  border-radius:6px;padding:3px 8px;cursor:pointer;transition:all .13s;}
+.person-del:hover{border-color:var(--alert);color:var(--alert);}
+.add-form{display:flex;gap:7px;margin-top:13px;flex-wrap:wrap;}
+.m-input{
+  flex:1;min-width:100px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+  color:var(--text);padding:7px 11px;font-size:0.8rem;font-family:'DM Sans',sans-serif;outline:none;
+  transition:background .25s,border-color .18s;
+}
+.m-input:focus{border-color:var(--p1);}
+.m-color{width:36px;height:36px;border-radius:8px;border:1px solid var(--border);
+  background:var(--surface2);cursor:pointer;padding:2px;}
+.m-btn{padding:7px 13px;border-radius:8px;border:1px solid var(--p1);
+  background:rgba(124,111,255,.15);color:var(--p1);font-size:0.75rem;font-weight:600;
+  cursor:pointer;transition:all .14s;white-space:nowrap;}
+.m-btn:hover{background:rgba(124,111,255,.28);}
+.m-close{float:right;font-size:0.71rem;color:var(--muted);background:none;
+  border:1px solid var(--border);border-radius:6px;padding:4px 10px;cursor:pointer;margin-bottom:13px;}
+.m-close:hover{border-color:var(--alert);color:var(--alert);}
+.note-save-btn,.note-cancel-btn{font-size:0.6rem;font-weight:600;padding:3px 9px;border-radius:5px;cursor:pointer;transition:all .13s;}
+.note-save-btn{border:1px solid var(--green);background:rgba(6,214,160,.12);color:var(--green);}
+.note-save-btn:hover{background:rgba(6,214,160,.22);}
+.note-cancel-btn{border:1px solid var(--border);background:transparent;color:var(--muted);}
+.note-cancel-btn:hover{color:var(--text);border-color:var(--muted);}
+
+/* ── VALUE MODAL ── */
+.value-grid{display:grid;gap:8px;margin-top:12px;}
+.value-row{display:flex;justify-content:space-between;align-items:center;
+  padding:8px 12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);}
+.value-row-name{font-size:0.75rem;font-weight:600;}
+.value-row-amt{font-family:'Bebas Neue',cursive;font-size:1.1rem;letter-spacing:1px;color:var(--gold);}
+.value-total{margin-top:10px;padding:10px 14px;background:rgba(255,209,102,.08);border-radius:10px;
+  border:1px solid rgba(255,209,102,.3);display:flex;justify-content:space-between;align-items:center;}
+body.light .value-total{background:rgba(184,138,0,.07);}
+.value-total-label{font-size:0.7rem;font-weight:600;color:var(--gold);}
+.value-total-amt{font-family:'Bebas Neue',cursive;font-size:1.5rem;color:var(--gold);}
+
+/* ── INSTALL BANNER ── */
+#installBanner{
+  display:none;padding:10px 20px;background:linear-gradient(135deg,rgba(124,111,255,.15),rgba(255,107,138,.15));
+  border-bottom:1px solid rgba(124,111,255,.25);
+  align-items:center;gap:10px;flex-wrap:wrap;
+}
+#installBanner.show{display:flex;}
+#installBanner span{font-size:0.7rem;flex:1;}
+.install-btn{font-size:0.68rem;font-weight:700;padding:5px 14px;border-radius:999px;
+  border:1px solid var(--p1);background:rgba(124,111,255,.2);color:var(--p1);
+  cursor:pointer;transition:all .15s;white-space:nowrap;}
+.install-btn:hover{background:rgba(124,111,255,.35);}
+.install-dismiss{font-size:0.62rem;color:var(--muted);background:none;border:none;cursor:pointer;padding:2px 6px;}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+
+/* ── MOBILE ── */
+@media(max-width:600px){
+  header{padding:9px 14px;gap:6px;}
+  .logo{font-size:1.2rem;}
+  .hbtn{font-size:0.62rem;padding:5px 9px;}
+  .toolbar{padding:8px 14px;gap:5px;}
+  main{padding:10px 12px;}
+  .stat-pill{min-width:80px;padding:8px 11px;}
+  .stat-pill-val{font-size:1.3rem;}
+  .card-header{padding:11px 14px;}
+  .card-body{padding:11px 14px;}
+  .activation-bar{padding:6px 14px;}
+  .mini-prog-bar{width:45px;}
+  .mcell{min-width:26px;height:30px;}
+  .legend{display:none;}
+  #syncBar{padding:7px 14px;}
+}
+@media(max-width:380px){
+  .hbtn{font-size:0.58rem;padding:4px 7px;letter-spacing:.3px;}
+}
+</style>
+</head>
+<body>
+
+<!-- ── NOTE MODAL ── -->
+<div class="modal-overlay" id="noteModal">
+  <div class="modal">
+    <button class="m-close" onclick="closeNoteModal()">✕ 닫기</button>
+    <div class="modal-title">📝 노트</div>
+    <div id="noteModalCardName" style="font-size:0.7rem;color:var(--muted);margin-bottom:4px;"></div>
+    <div id="noteModalBenefitName" style="font-size:0.85rem;font-weight:600;margin-bottom:14px;"></div>
+    <textarea class="m-input" id="noteModalTA" rows="5" placeholder="이 혜택에 대한 노트를 입력하세요…" style="width:100%;resize:vertical;min-height:80px;"></textarea>
+    <div style="display:flex;gap:8px;margin-top:10px;">
+      <button class="note-save-btn" onclick="saveNoteModal()" style="flex:1;padding:8px;">저장</button>
+      <button class="note-cancel-btn" onclick="closeNoteModal()" style="padding:8px 14px;">취소</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── PEOPLE MODAL ── -->
+<div class="modal-overlay" id="peopleModal">
+  <div class="modal">
+    <button class="m-close" onclick="closePeopleModal()">✕ 닫기</button>
+    <div class="modal-title">멤버 관리</div>
+    <div id="peopleList"></div>
+    <div class="add-form">
+      <input class="m-input" id="newName" placeholder="이름 (예: 아들)" maxlength="12">
+      <input type="color" class="m-color" id="newColor" value="#34d399">
+      <button class="m-btn" onclick="addPerson()">+ 추가</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── VALUE MODAL ── -->
+<div class="modal-overlay" id="valueModal">
+  <div class="modal">
+    <button class="m-close" onclick="closeValueModal()">✕ 닫기</button>
+    <div class="modal-title">💰 혜택 가치 합산</div>
+    <p style="font-size:0.72rem;color:var(--muted);margin-bottom:4px;" id="valueYear"></p>
+    <div id="valueGrid" class="value-grid"></div>
+    <div style="margin-top:14px;display:flex;gap:8px;">
+      <button class="m-btn" onclick="exportCSV()" style="flex:1;text-align:center;">📥 CSV 내보내기</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── INSTALL BANNER ── -->
+<div id="installBanner">
+  <span>📲 이 앱을 홈 화면에 추가하면 오프라인에서도 사용할 수 있어요!</span>
+  <button class="install-btn" onclick="doInstall()">홈 화면에 추가</button>
+  <button class="install-dismiss" onclick="dismissInstall()">✕</button>
+</div>
+
+<header>
+  <div class="logo">CARD TRACKER</div>
+  <div class="header-center">
+    <button class="hbtn active" id="btnCard" onclick="switchView('card')">📋 카드별</button>
+    <button class="hbtn" id="btnBenefit" onclick="switchView('benefit')">✨ 혜택별</button>
+    <button class="hbtn warn" id="btnMissed" onclick="toggleMissed()">⚠️ 놓친<span class="badge" id="missedBadge" style="display:none"></span></button>
+    <button class="hbtn" onclick="openValueModal()" style="border-color:rgba(255,209,102,.4);color:var(--gold);">💰 합산</button>
+  </div>
+  <div class="header-right">
+    <div class="legend" id="legendRow"></div>
+    <button class="hbtn" onclick="openPeopleModal()" style="border-color:rgba(124,111,255,.45);color:var(--p1);">👤 멤버</button>
+    <!-- Theme toggle -->
+    <button class="icon-btn" id="themeBtn" onclick="toggleTheme()" title="다크/라이트 모드">🌙</button>
+    <!-- Sync toggle -->
+    <button class="icon-btn" id="syncToggleBtn" onclick="toggleSyncBar()" title="동기화">🔗</button>
+    <select class="year-select" id="yearSelect" onchange="changeYear(this.value)"></select>
+  </div>
+</header>
+
+<!-- ── SYNC BAR ── -->
+<div id="syncBar" class="hidden">
+  <div class="sync-dot" id="syncDot"></div>
+  <span id="syncStatus">동기화 비활성</span>
+  <div class="sync-code-wrap">
+    <span style="color:var(--muted);font-size:0.62rem;">코드:</span>
+    <input class="sync-code-input" id="syncCodeInput" maxlength="8" placeholder="ABCD1234" title="공유 코드 (최대 8자)">
+    <button class="sync-btn primary" onclick="activateSync()">연결</button>
+    <button class="sync-btn" onclick="generateSyncCode()">새 코드</button>
+    <button class="sync-btn" onclick="pushSync()">↑ 업로드</button>
+    <button class="sync-btn" onclick="pullSync()">↓ 다운로드</button>
+  </div>
+  <span style="font-size:0.6rem;color:var(--muted);font-style:italic;">같은 코드를 다른 기기에서 입력하면 데이터가 공유됩니다</span>
+</div>
+
+<!-- ── PERIOD TOOLBAR ── -->
+<div class="toolbar">
+  <span class="toolbar-label">기간</span>
+  <button class="tbtn active" id="pf_all" onclick="setPeriod('all')">전체</button>
+  <button class="tbtn" id="pf_this_month" onclick="setPeriod('this_month')">이번 달</button>
+  <button class="tbtn" id="pf_this_quarter" onclick="setPeriod('this_quarter')">이번 분기</button>
+  <button class="tbtn" id="pf_h1" onclick="setPeriod('h1')">상반기</button>
+  <button class="tbtn" id="pf_h2" onclick="setPeriod('h2')">하반기</button>
+  <div class="toolbar-sep"></div>
+  <span id="periodHint"></span>
+</div>
+
+<main>
+  <!-- ── URGENT BANNER ── -->
+  <div id="urgentBanner">
+    <div class="urgent-banner">
+      <div class="urgent-banner-icon">⏰</div>
+      <div class="urgent-banner-content">
+        <div class="urgent-banner-title">만료 임박 — 이번 달/분기 안에 사용하세요!</div>
+        <div id="urgentList"></div>
+      </div>
+      <button class="urgent-close" onclick="document.getElementById('urgentBanner').style.display='none'">✕</button>
+    </div>
+  </div>
+
+  <div class="stats-row" id="statsRow"></div>
+
+  <div id="cardView"><div class="cards-grid" id="cardsGrid"></div></div>
+  <div id="benefitView">
+    <div class="bv-filter-bar" id="bvFilterBar"></div>
+    <div class="bv-grid" id="bvGrid"></div>
+  </div>
+</main>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  CARD DATA
+// ═══════════════════════════════════════════════════════
+const MONTHS = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+const MO_MAP = {Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
+
+const CARDS_DEF = [
+  { id:'amex_plat_personal', name:'Amex Plat (개인)', benefits:[
+    { id:'uber_cash', name:'Uber Cash', type:'monthly',
+      p1:{amounts:['$15','$15','$15','$15','$15','$15','$15','$15','$15','$15','$15','$35']},
+      p2:{amounts:['$15','$15','$15','$15','$15','$15','$15','$15','$15','$15','$15','$35']} },
+    { id:'lululemon', name:'Lululemon Credit', type:'period',
+      p1:{periods:['Jan–Mar ($75)','Apr–Jun ($75)','Jul–Sep ($75)','Oct–Dec ($75)']},
+      p2:{periods:['Jan–Mar ($75)','Apr–Jun ($75)','Jul–Sep ($75)','Oct–Dec ($75)']} },
+    { id:'resy', name:'Resy Credit', type:'period',
+      p1:{periods:['Jan–Mar ($100)','Apr–Jun ($100)','Jul–Sep ($100)','Oct–Dec ($100)']},
+      p2:{periods:['Jan–Mar ($100)','Apr–Jun ($100)','Jul–Sep ($100)','Oct–Dec ($100)']} },
+    { id:'saks', name:'Saks Fifth Ave', type:'period',
+      p1:{periods:['Jan–Jun ($50)','Jul–Dec ($50)']},
+      p2:{periods:['Jan–Jun ($50)','Jul–Dec ($50)']} },
+    { id:'uber_one', name:'Uber One Credit', type:'annual', amount:'$120/yr', p1:{}, p2:{} },
+    { id:'oura', name:'Oura Ring Credit', type:'annual', amount:'$200/yr', p1:{}, p2:{} },
+    { id:'airline', name:'Airline Credit', type:'annual', amount:'$200/yr', p1:{}, p2:{} },
+    { id:'hotel', name:'Hotel Credit (FHR / Collection)', type:'period',
+      p1:{periods:['Jan–Jun ($300)','Jul–Dec ($300)']},
+      p2:{periods:['Jan–Jun ($300)','Jul–Dec ($300)']} },
+    { id:'walmart', name:'Walmart+', type:'monthly',
+      p1:{amounts:Array(12).fill('$12.95')}, p2:{amounts:Array(12).fill('$12.95')} },
+    { id:'digital', name:'Digital Entertainment Credit', type:'monthly',
+      p1:{amounts:Array(12).fill('$25')}, p2:{amounts:Array(12).fill('$25')} },
+    { id:'clear', name:'CLEAR Plus', type:'annual', amount:'$209/yr', p1:{}, p2:{} },
+    { id:'global_entry', name:'Global Entry', type:'annual', amount:'$120/4yr', p1:{}, p2:{} },
+    { id:'foreign', name:'Foreign Fee', type:'info', info:'없음 (No foreign transaction fee)' },
+    { id:'match', name:'Status Matching', type:'info', info:'힐튼 골드 / 메리어트 골드' }
+  ]},
+  { id:'amex_plat_biz', name:'Amex Plat (Biz)', benefits:[
+    { id:'hilton_resort', name:'Hilton Resort Credit', type:'period',
+      note:'힐튼 애너하임 스벅 기카 충전용',
+      p1:{periods:['Jan–Mar ($50)','Apr–Jun ($50)','Jul–Sep ($50)','Oct–Dec ($50)']}, p2:null },
+    { id:'airline', name:'Airline Credit', type:'annual', amount:'$200/yr', p1:{}, p2:null },
+    { id:'hotel', name:'Hotel Credit (FHR / Collection)', type:'period',
+      p1:{periods:['Jan–Jun ($300)','Jul–Dec ($300)']}, p2:null },
+    { id:'dell', name:'Dell Credit', type:'annual', amount:'$150/yr', p1:{}, p2:null },
+    { id:'wireless', name:'Wireless Cell Credit', type:'monthly',
+      p1:{amounts:Array(12).fill('$10')}, p2:null },
+    { id:'clear', name:'CLEAR Plus', type:'annual', amount:'$209/yr', p1:{}, p2:null },
+    { id:'global_entry', name:'Global Entry', type:'annual', amount:'$120/4yr', p1:{}, p2:null },
+    { id:'foreign', name:'Foreign Fee', type:'info', info:'없음 (No foreign transaction fee)' }
+  ]},
+  { id:'amex_gold', name:'Amex Gold', benefits:[
+    { id:'dunkin', name:'Dunkin Credit', type:'monthly', p1:null, p2:{amounts:Array(12).fill('$7')} },
+    { id:'grubhub', name:'Grubhub (Dining Credit)', type:'monthly', p1:null, p2:{amounts:Array(12).fill('$10')} },
+    { id:'uber_cash', name:'Uber Cash', type:'monthly', p1:null, p2:{amounts:Array(12).fill('$10')} },
+    { id:'resy', name:'Resy Credit', type:'period', p1:null, p2:{periods:['Jan–Jun ($50)','Jul–Dec ($50)']} },
+    { id:'hotel', name:'Hotel Credit (FHR / Collection)', type:'annual', amount:'$100/yr', p1:null, p2:{} },
+    { id:'foreign', name:'Foreign Fee', type:'info', info:'없음 (No foreign transaction fee)' }
+  ]},
+  { id:'hilton_aspire', name:'힐튼 어스파이어', benefits:[
+    { id:'hilton_resort', name:'Hilton Resort Credit', type:'period',
+      p1:{periods:['Jan–Jun ($200)','Jul–Dec ($200)']}, p2:{periods:['Jan–Jun ($200)','Jul–Dec ($200)']} },
+    { id:'airline', name:'Airline Credit', type:'period',
+      p1:{periods:['Jan–Mar ($50)','Apr–Jun ($50)','Jul–Sep ($50)','Oct–Dec ($50)']},
+      p2:{periods:['Jan–Mar ($50)','Apr–Jun ($50)','Jul–Sep ($50)','Oct–Dec ($50)']} },
+    { id:'clear', name:'CLEAR Plus', type:'annual', amount:'$209/yr', p1:{}, p2:{} },
+    { id:'foreign', name:'Foreign Fee', type:'info', info:'없음 (No foreign transaction fee)' },
+    { id:'special', name:'특별 혜택', type:'info', info:'무료 숙박권 + Conrad/Waldorf Astoria 숙박 크레딧 $100 (2박 이상 예약시)' }
+  ]},
+  { id:'amex_delta_biz', name:'Amex Delta Biz Gold', benefits:[
+    { id:'travel', name:'여행 크레딧 (Delta Stays)', type:'annual', amount:'$150/yr', p1:null, p2:{} },
+    { id:'perks', name:'Delta 특전', type:'info', info:'첫 번째 수화물 무료 · Zone 5 우선 탑승 · 기내 식음료 20% 할인' }
+  ]}
+];
+
+// ═══════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════
+function defaultState(){
+  return {
+    checks:{}, people:[
+      {id:'p1',name:'나',color:'#7c6fff',label:'P1'},
+      {id:'p2',name:'와이프',color:'#ff6b8a',label:'P2'}
+    ],
+    activation:{}, period:'all', missed:false, view:'card',
+    selBenefit:null, collapsed:[], notes:{},
+    selectedYear:new Date().getFullYear(),
+    theme:'dark', syncCode:'', syncBarOpen:false
+  };
+}
+function loadSt(){
+  try{
+    const r=JSON.parse(localStorage.getItem('ctv5')||'{}');
+    const d=defaultState();
+    return {
+      checks:r.checks||{}, people:r.people||d.people,
+      activation:r.activation||{}, period:r.period||'all',
+      missed:r.missed||false, view:r.view||'card',
+      selBenefit:r.selBenefit||null, collapsed:r.collapsed||[],
+      notes:r.notes||{}, selectedYear:r.selectedYear||d.selectedYear,
+      theme:r.theme||'dark', syncCode:r.syncCode||'', syncBarOpen:r.syncBarOpen||false
+    };
+  }catch(e){return defaultState();}
+}
+function saveSt(){try{localStorage.setItem('ctv5',JSON.stringify({...S,collapsed:[...collSet]}));}catch(e){}}
+
+const S=loadSt();
+const collSet=new Set(S.collapsed);
+
+// ═══════════════════════════════════════════════════════
+//  THEME
+// ═══════════════════════════════════════════════════════
+function applyTheme(t){
+  document.body.classList.toggle('light',t==='light');
+  document.getElementById('themeBtn').textContent=t==='light'?'🌙':'☀️';
+  document.getElementById('themeColorMeta').content=t==='light'?'#f4f4f8':'#0d0d12';
+}
+function toggleTheme(){
+  S.theme=S.theme==='dark'?'light':'dark';
+  applyTheme(S.theme); saveSt();
+}
+applyTheme(S.theme);
+
+// ═══════════════════════════════════════════════════════
+//  YEAR / TIME CONTEXT
+// ═══════════════════════════════════════════════════════
+let CUR_MONTH, CUR_Q, DAYS_LEFT_MONTH, DAYS_LEFT_QUARTER;
+function updateYearContext(){
+  const now=new Date();
+  const curYear=now.getFullYear();
+  if(S.selectedYear===curYear){
+    CUR_MONTH=now.getMonth(); CUR_Q=Math.floor(CUR_MONTH/3);
+    // days left in month
+    const lastDay=new Date(curYear,CUR_MONTH+1,0).getDate();
+    DAYS_LEFT_MONTH=lastDay-now.getDate();
+    // days left in quarter
+    const qEnd=new Date(curYear,(CUR_Q+1)*3,0);
+    DAYS_LEFT_QUARTER=Math.ceil((qEnd-now)/(1000*60*60*24));
+  } else if(S.selectedYear<curYear){
+    CUR_MONTH=11; CUR_Q=3; DAYS_LEFT_MONTH=0; DAYS_LEFT_QUARTER=0;
+  } else {
+    CUR_MONTH=-1; CUR_Q=-1; DAYS_LEFT_MONTH=999; DAYS_LEFT_QUARTER=999;
+  }
+}
+updateYearContext();
+
+// ═══════════════════════════════════════════════════════
+//  KEYS
+// ═══════════════════════════════════════════════════════
+function ck(cardId,benefitId,personId,idx){return `${S.selectedYear}|${cardId}|${benefitId}|${personId}|${idx}`;}
+function isChk(key){return !!S.checks[key];}
+function toggle(key){S.checks[key]=!S.checks[key];saveSt();renderAll();syncDebounce();}
+
+function getNoteKey(cid,bid){return `${cid}:${bid}`;}
+function getNote(cid,bid){return (S.notes[String(S.selectedYear)]||{})[getNoteKey(cid,bid)]||'';}
+function setNote(cid,bid,text){
+  const yr=String(S.selectedYear);
+  if(!S.notes[yr])S.notes[yr]={};
+  if(text.trim())S.notes[yr][getNoteKey(cid,bid)]=text.trim();
+  else delete S.notes[yr][getNoteKey(cid,bid)];
+  saveSt();
+}
+
+// ═══════════════════════════════════════════════════════
+//  YEAR SELECT
+// ═══════════════════════════════════════════════════════
+function buildYearSelect(){
+  const sel=document.getElementById('yearSelect');
+  const cur=new Date().getFullYear(); sel.innerHTML='';
+  for(let y=cur-1;y<=cur+2;y++){
+    const o=document.createElement('option');
+    o.value=y;o.textContent=y+'년';
+    if(y===S.selectedYear)o.selected=true;
+    sel.appendChild(o);
+  }
+}
+function changeYear(y){S.selectedYear=parseInt(y,10);updateYearContext();saveSt();renderAll();}
+
+// ═══════════════════════════════════════════════════════
+//  PERIOD HELPERS
+// ═══════════════════════════════════════════════════════
+function parseRange(label){const m=label.match(/([A-Z][a-z]+)[–-]([A-Z][a-z]+)/);return m?[MO_MAP[m[1]],MO_MAP[m[2]]]:null;}
+function moInFilter(i){
+  if(S.period==='all')return true;
+  if(S.period==='this_month')return i===CUR_MONTH;
+  if(S.period==='this_quarter')return CUR_Q>=0&&Math.floor(i/3)===CUR_Q;
+  if(S.period==='h1')return i<=5;
+  if(S.period==='h2')return i>=6;
+  return true;
+}
+function periodInFilter(label){
+  const r=parseRange(label);if(!r)return true;
+  if(S.period==='all')return true;
+  if(S.period==='this_month')return CUR_MONTH>=r[0]&&CUR_MONTH<=r[1];
+  if(S.period==='this_quarter'){if(CUR_Q<0)return false;const qs=CUR_Q*3,qe=qs+2;return r[0]<=qe&&r[1]>=qs;}
+  if(S.period==='h1')return r[0]<=5;
+  if(S.period==='h2')return r[1]>=6;
+  return true;
+}
+function moIsPast(i){return CUR_MONTH>=0&&i<CUR_MONTH;}
+function periodIsPast(label){const r=parseRange(label);return r?r[1]<CUR_MONTH:false;}
+
+// ── Urgency: is this month/period about to expire? (≤7 days left)
+function moIsUrgent(i){
+  if(CUR_MONTH<0)return false;
+  return i===CUR_MONTH&&DAYS_LEFT_MONTH<=7;
+}
+function periodIsUrgent(label){
+  const r=parseRange(label);if(!r)return false;
+  // current period ending soon
+  if(CUR_Q>=0){
+    const qEnd=(CUR_Q+1)*3-1;
+    if(r[1]===qEnd&&DAYS_LEFT_QUARTER<=7)return true;
+  }
+  if(CUR_MONTH>=0&&r[1]===CUR_MONTH&&DAYS_LEFT_MONTH<=7)return true;
+  return false;
+}
+
+// ═══════════════════════════════════════════════════════
+//  ACTIVATION
+// ═══════════════════════════════════════════════════════
+function isActive(cardId,personId){
+  const ca=S.activation[cardId];
+  if(!ca||ca[personId]===undefined)return personId==='p1'||personId==='p2';
+  return !!ca[personId];
+}
+function toggleActivation(cardId,personId){
+  if(!S.activation[cardId])S.activation[cardId]={};
+  S.activation[cardId][personId]=!isActive(cardId,personId);
+  saveSt();renderAll();
+}
+function getBData(b,pid){
+  if(pid==='p1')return b.p1===undefined?null:b.p1;
+  if(pid==='p2')return b.p2===undefined?null:b.p2;
+  return b.p1||b.p2||null;
+}
+
+// ═══════════════════════════════════════════════════════
+//  URGENT BANNER
+// ═══════════════════════════════════════════════════════
+function computeUrgentItems(){
+  const items=[];
+  if(S.selectedYear!==new Date().getFullYear())return items;
+  CARDS_DEF.forEach(card=>{
+    card.benefits.forEach(b=>{
+      if(b.type==='info')return;
+      S.people.forEach(per=>{
+        if(!isActive(card.id,per.id))return;
+        const pd=getBData(b,per.id);if(!pd)return;
+        if(b.type==='monthly'){
+          (pd.amounts||[]).forEach((amt,i)=>{
+            if(moIsUrgent(i)&&!isChk(ck(card.id,b.id,per.id,i)))
+              items.push(`${card.name} — ${b.name} ${amt} (${per.name}, ${MONTHS[i]})`);
+          });
+        } else if(b.type==='period'){
+          (pd.periods||[]).forEach((period,i)=>{
+            if(periodIsUrgent(period)&&!isChk(ck(card.id,b.id,per.id,i)))
+              items.push(`${card.name} — ${b.name} ${period} (${per.name})`);
+          });
+        }
+      });
+    });
+  });
+  return items;
+}
+function renderUrgentBanner(){
+  const items=computeUrgentItems();
+  const banner=document.getElementById('urgentBanner');
+  const badge=document.getElementById('missedBadge');
+  if(items.length>0){
+    banner.style.display='block';
+    document.getElementById('urgentList').innerHTML=items.slice(0,6).map(t=>`<div class="urgent-item">${t}</div>`).join('')+
+      (items.length>6?`<div class="urgent-item">… 외 ${items.length-6}건</div>`:'');
+    badge.style.display='flex';badge.textContent=items.length;
+  } else {
+    banner.style.display='none';
+    badge.style.display='none';
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  NOTE MODAL
+// ═══════════════════════════════════════════════════════
+let _noteCtx={cardId:null,benefitId:null};
+function openNoteModal(cardId,benefitId,cardName,benefitName){
+  _noteCtx={cardId,benefitId};
+  document.getElementById('noteModalCardName').textContent=cardName;
+  document.getElementById('noteModalBenefitName').textContent=benefitName;
+  document.getElementById('noteModalTA').value=getNote(cardId,benefitId);
+  document.getElementById('noteModal').classList.add('open');
+  setTimeout(()=>document.getElementById('noteModalTA').focus(),120);
+}
+function closeNoteModal(){document.getElementById('noteModal').classList.remove('open');}
+function saveNoteModal(){
+  setNote(_noteCtx.cardId,_noteCtx.benefitId,document.getElementById('noteModalTA').value);
+  closeNoteModal();renderAll();syncDebounce();
+}
+
+// ═══════════════════════════════════════════════════════
+//  PEOPLE MODAL
+// ═══════════════════════════════════════════════════════
+function openPeopleModal(){renderPplModal();document.getElementById('peopleModal').classList.add('open');}
+function closePeopleModal(){document.getElementById('peopleModal').classList.remove('open');}
+function renderPplModal(){
+  document.getElementById('peopleList').innerHTML=S.people.map((p,i)=>`
+    <div class="person-row">
+      <div class="person-dot" style="background:${p.color}"></div>
+      <div class="person-name">${p.name}</div>
+      <div class="person-tag">${p.label}</div>
+      ${i>=2?`<button class="person-del" onclick="delPerson('${p.id}')">삭제</button>`
+             :`<span style="font-size:0.58rem;color:var(--muted);padding:3px 8px">기본</span>`}
+    </div>`).join('');
+}
+function addPerson(){
+  const name=document.getElementById('newName').value.trim();if(!name)return;
+  const color=document.getElementById('newColor').value;
+  const id='px_'+Date.now(), label='P'+(S.people.length+1);
+  S.people.push({id,name,color,label});
+  document.getElementById('newName').value='';
+  saveSt();renderPplModal();renderAll();
+}
+function delPerson(pid){
+  S.people=S.people.filter(p=>p.id!==pid);
+  Object.keys(S.checks).forEach(k=>{if(k.includes('|'+pid+'|'))delete S.checks[k];});
+  Object.keys(S.activation).forEach(cid=>{if(S.activation[cid])delete S.activation[cid][pid];});
+  saveSt();renderPplModal();renderAll();
+}
+
+// ═══════════════════════════════════════════════════════
+//  VALUE MODAL
+// ═══════════════════════════════════════════════════════
+function openValueModal(){
+  const yr=S.selectedYear;
+  document.getElementById('valueYear').textContent=yr+'년 전체 혜택 가치 (활성화된 카드 기준)';
+  const rows=[];let grand=0;
+  CARDS_DEF.forEach(card=>{
+    let tot=0;
+    card.benefits.forEach(b=>{
+      if(b.type==='info')return;
+      S.people.forEach(per=>{
+        if(!isActive(card.id,per.id))return;
+        const pd=getBData(b,per.id);if(!pd)return;
+        const $=v=>{const m=v.match(/\$([\d.]+)/);return m?parseFloat(m[1]):0;};
+        if(b.type==='monthly')(pd.amounts||[]).forEach(v=>tot+=$(v));
+        else if(b.type==='period')(pd.periods||[]).forEach(v=>tot+=$(v));
+        else if(b.type==='annual'){const m=(b.amount||'').match(/\$([\d.]+)/);if(m)tot+=parseFloat(m[1]);}
+      });
+    });
+    if(tot>0){rows.push({name:card.name,total:tot});grand+=tot;}
+  });
+  document.getElementById('valueGrid').innerHTML=
+    rows.map(r=>`<div class="value-row"><span class="value-row-name">${r.name}</span><span class="value-row-amt">$${r.total.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:2})}</span></div>`).join('')+
+    `<div class="value-total"><span class="value-total-label">총 혜택 가치</span><span class="value-total-amt">$${grand.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:2})}</span></div>`;
+  document.getElementById('valueModal').classList.add('open');
+}
+function closeValueModal(){document.getElementById('valueModal').classList.remove('open');}
+
+// ═══════════════════════════════════════════════════════
+//  CSV EXPORT
+// ═══════════════════════════════════════════════════════
+function exportCSV(){
+  const yr=S.selectedYear;
+  const rows=[['연도','카드','혜택','유형','사용자','기간/월','금액','완료','노트']];
+  CARDS_DEF.forEach(card=>{
+    card.benefits.forEach(b=>{
+      if(b.type==='info')return;
+      S.people.forEach(per=>{
+        if(!isActive(card.id,per.id))return;
+        const pd=getBData(b,per.id);if(!pd)return;
+        const note=getNote(card.id,b.id);
+        if(b.type==='monthly'){
+          (pd.amounts||[]).forEach((amt,i)=>{
+            const done=isChk(ck(card.id,b.id,per.id,i));
+            rows.push([yr,card.name,b.name,'월별',per.name,MONTHS[i],amt,done?'✓':'',note]);
+          });
+        } else if(b.type==='period'){
+          (pd.periods||[]).forEach((period,i)=>{
+            const done=isChk(ck(card.id,b.id,per.id,i));
+            rows.push([yr,card.name,b.name,'기간별',per.name,period,'',done?'✓':'',note]);
+          });
+        } else if(b.type==='annual'){
+          const done=isChk(ck(card.id,b.id,per.id,0));
+          rows.push([yr,card.name,b.name,'연간',per.name,'연간',b.amount,done?'✓':'',note]);
+        }
+      });
+    });
+  });
+  const csv=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download=`card_tracker_${yr}.csv`;
+  a.click();URL.revokeObjectURL(a.href);
+}
+
+// ═══════════════════════════════════════════════════════
+//  SYNC (JSONBin.io)
+// ═══════════════════════════════════════════════════════
+const JSONBIN_API_KEY='$2a$10$p6I8pCsvIduNMaDA8l6vpeO.B2kf/YPfCnwGc5cCdpt6tdypFAczi';
+const JSONBIN_BASE='https://api.jsonbin.io/v3';
+
+function setSyncStatus(state,text){
+  const dot=document.getElementById('syncDot');
+  const status=document.getElementById('syncStatus');
+  dot.className='sync-dot'+(state?' '+state:'');
+  status.textContent=text;
+}
+let _syncTimer=null;
+function syncDebounce(){
+  if(!S.syncCode)return;
+  clearTimeout(_syncTimer);
+  _syncTimer=setTimeout(()=>pushSync(true),3000);
+}
+
+function generateSyncCode(){
+  const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code='';for(let i=0;i<6;i++)code+=chars[Math.floor(Math.random()*chars.length)];
+  document.getElementById('syncCodeInput').value=code;
+}
+
+function toggleSyncBar(){
+  S.syncBarOpen=!S.syncBarOpen;
+  document.getElementById('syncBar').classList.toggle('hidden',!S.syncBarOpen);
+  if(S.syncBarOpen&&S.syncCode)document.getElementById('syncCodeInput').value=S.syncCode;
+  saveSt();
+}
+
+function activateSync(){
+  const code=document.getElementById('syncCodeInput').value.trim().toUpperCase();
+  if(code.length<4){alert('코드는 4자 이상 입력하세요.');return;}
+  S.syncCode=code;saveSt();
+  setSyncStatus('busy','연결 중…');
+  pullSync();
+}
+
+// 코드 → JSONBin bin ID 매핑을 위해 bin name에 코드를 저장
+async function findBinByCode(code){
+  try{
+    const r=await fetch(`${JSONBIN_BASE}/b?meta=false`,{
+      headers:{'X-Master-Key':JSONBIN_API_KEY}
+    });
+    if(!r.ok)return null;
+    const bins=await r.json();
+    const found=(bins.result||[]).find(b=>b.snippetMeta&&b.snippetMeta.name===`card-tracker-${code}`);
+    return found?found.id:null;
+  }catch(e){return null;}
+}
+
+async function pushSync(silent=false){
+  if(!S.syncCode){if(!silent)alert('먼저 동기화 코드를 연결하세요.');return;}
+  setSyncStatus('busy','업로드 중…');
+  try{
+    const payload={...S,collapsed:[...collSet]};
+    // bin ID가 저장되어 있으면 업데이트, 없으면 새로 생성
+    let binId=S.syncBinId||null;
+    if(!binId){
+      // 새 bin 생성
+      const r=await fetch(`${JSONBIN_BASE}/b`,{
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json',
+          'X-Master-Key':JSONBIN_API_KEY,
+          'X-Bin-Name':`card-tracker-${S.syncCode}`,
+          'X-Bin-Private':'true'
+        },
+        body:JSON.stringify(payload)
+      });
+      if(!r.ok)throw new Error(r.status);
+      const data=await r.json();
+      binId=data.metadata.id;
+      S.syncBinId=binId;
+      saveSt();
+    } else {
+      // 기존 bin 업데이트
+      const r=await fetch(`${JSONBIN_BASE}/b/${binId}`,{
+        method:'PUT',
+        headers:{
+          'Content-Type':'application/json',
+          'X-Master-Key':JSONBIN_API_KEY
+        },
+        body:JSON.stringify(payload)
+      });
+      if(!r.ok)throw new Error(r.status);
+    }
+    setSyncStatus('ok',`업로드 완료 · ${new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})}`);
+  }catch(e){setSyncStatus('err','업로드 실패 — 네트워크 확인');}
+}
+
+async function pullSync(){
+  if(!S.syncCode){alert('먼저 동기화 코드를 연결하세요.');return;}
+  setSyncStatus('busy','다운로드 중…');
+  try{
+    let binId=S.syncBinId||null;
+    if(!binId){
+      // bin 목록에서 코드로 찾기
+      const r=await fetch(`${JSONBIN_BASE}/b?meta=false`,{
+        headers:{'X-Master-Key':JSONBIN_API_KEY}
+      });
+      if(!r.ok)throw new Error(r.status);
+      const bins=await r.json();
+      const found=(bins.result||[]).find(b=>b.snippetMeta&&b.snippetMeta.name===`card-tracker-${S.syncCode}`);
+      if(!found){setSyncStatus('ok','코드 연결됨 (데이터 없음 — 먼저 업로드하세요)');return;}
+      binId=found.id;
+      S.syncBinId=binId;
+      saveSt();
+    }
+    const r=await fetch(`${JSONBIN_BASE}/b/${binId}/latest`,{
+      headers:{'X-Master-Key':JSONBIN_API_KEY}
+    });
+    if(!r.ok)throw new Error(r.status);
+    const data=await r.json();
+    const remote=data.record;
+    Object.assign(S,{
+      checks:remote.checks||S.checks,
+      people:remote.people||S.people,
+      activation:remote.activation||S.activation,
+      notes:remote.notes||S.notes,
+      period:remote.period||S.period,
+      missed:remote.missed??S.missed,
+      view:remote.view||S.view,
+      selBenefit:remote.selBenefit??S.selBenefit,
+      selectedYear:remote.selectedYear||S.selectedYear,
+      syncBinId:remote.syncBinId||binId
+    });
+    if(remote.collapsed)(remote.collapsed).forEach(id=>collSet.add(id));
+    saveSt();renderAll();buildYearSelect();
+    setSyncStatus('ok',`다운로드 완료 · ${new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})}`);
+  }catch(e){setSyncStatus('err','다운로드 실패 — 네트워크 확인');}
+}
+
+// ═══════════════════════════════════════════════════════
+//  PWA — INSTALL
+// ═══════════════════════════════════════════════════════
+let _deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();_deferredPrompt=e;
+  if(!localStorage.getItem('pwa_dismissed'))
+    document.getElementById('installBanner').classList.add('show');
+});
+function doInstall(){
+  if(!_deferredPrompt)return;
+  _deferredPrompt.prompt();
+  _deferredPrompt.userChoice.then(()=>{
+    _deferredPrompt=null;
+    document.getElementById('installBanner').classList.remove('show');
+  });
+}
+function dismissInstall(){
+  localStorage.setItem('pwa_dismissed','1');
+  document.getElementById('installBanner').classList.remove('show');
+}
+
+// Inject manifest blob
+(function(){
+  const manifest={
+    name:'카드 트래커',short_name:'카드 트래커',
+    description:'신용카드 혜택 트래커',
+    start_url:'./',display:'standalone',
+    background_color:'#0d0d12',theme_color:'#0d0d12',
+    icons:[
+      {src:"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='32' fill='%230d0d12'/%3E%3Crect x='20' y='56' width='152' height='96' rx='12' fill='%237c6fff'/%3E%3Crect x='20' y='84' width='152' height='20' fill='%23ff6b8a'/%3E%3C/svg%3E",sizes:'192x192',type:'image/svg+xml'},
+      {src:"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='80' fill='%230d0d12'/%3E%3Crect x='50' y='150' width='412' height='260' rx='30' fill='%237c6fff'/%3E%3Crect x='50' y='224' width='412' height='56' fill='%23ff6b8a'/%3E%3C/svg%3E",sizes:'512x512',type:'image/svg+xml'}
+    ]
+  };
+  const blob=new Blob([JSON.stringify(manifest)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const link=document.createElement('link');
+  link.rel='manifest';link.href=url;
+  document.head.appendChild(link);
+})();
+
+// Register Service Worker inline via blob
+(function(){
+  const swCode=`
+const CACHE='card-tracker-v5';
+const ASSETS=[self.location.href.replace(/sw\\.js.*/,'')];
+self.addEventListener('install',e=>{
+  e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting()));
+});
+self.addEventListener('activate',e=>{
+  e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));
+});
+self.addEventListener('fetch',e=>{
+  if(e.request.method!=='GET')return;
+  e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(res=>{
+    const clone=res.clone();
+    caches.open(CACHE).then(c=>c.put(e.request,clone));
+    return res;
+  }).catch(()=>caches.match(e.request))));
+});`;
+  if('serviceWorker' in navigator){
+    const blob=new Blob([swCode],{type:'application/javascript'});
+    const url=URL.createObjectURL(blob);
+    navigator.serviceWorker.register(url,{scope:'./'}).catch(()=>{});
+  }
+})();
+
+// ═══════════════════════════════════════════════════════
+//  PERIOD FILTER
+// ═══════════════════════════════════════════════════════
+function setPeriod(f){
+  S.period=f;
+  ['all','this_month','this_quarter','h1','h2'].forEach(id=>document.getElementById('pf_'+id).classList.toggle('active',id===f));
+  const qLabels=['1분기 (1-3월)','2분기 (4-6월)','3분기 (7-9월)','4분기 (10-12월)'];
+  const hints={all:'전체 혜택 표시',
+    this_month:CUR_MONTH>=0?`${MONTHS[CUR_MONTH]} 해당 혜택`:`${S.selectedYear}년 전체`,
+    this_quarter:CUR_Q>=0?`${qLabels[CUR_Q]} 해당 혜택`:`${S.selectedYear}년 전체`,
+    h1:'1월~6월 혜택',h2:'7월~12월 혜택'};
+  document.getElementById('periodHint').textContent=hints[f]||'';
+  saveSt();renderAll();
+}
+
+// ═══════════════════════════════════════════════════════
+//  MISSED
+// ═══════════════════════════════════════════════════════
+function toggleMissed(){
+  S.missed=!S.missed;
+  document.getElementById('btnMissed').classList.toggle('active',S.missed);
+  saveSt();renderAll();
+}
+
+// ═══════════════════════════════════════════════════════
+//  PROGRESS
+// ═══════════════════════════════════════════════════════
+function cardProg(card){
+  const res={};S.people.forEach(p=>{res[p.id]={done:0,total:0};});
+  card.benefits.forEach(b=>{
+    if(b.type==='info')return;
+    S.people.forEach(per=>{
+      if(!isActive(card.id,per.id))return;
+      const pd=getBData(b,per.id);if(!pd)return;
+      if(b.type==='monthly'){
+        (pd.amounts||[]).forEach((_,i)=>{
+          if(!moInFilter(i))return;
+          res[per.id].total++;if(isChk(ck(card.id,b.id,per.id,i)))res[per.id].done++;
+        });
+      } else if(b.type==='period'){
+        (pd.periods||[]).forEach((period,i)=>{
+          if(!periodInFilter(period))return;
+          res[per.id].total++;if(isChk(ck(card.id,b.id,per.id,i)))res[per.id].done++;
+        });
+      } else if(b.type==='annual'){
+        if(S.period!=='all')return;
+        res[per.id].total++;if(isChk(ck(card.id,b.id,per.id,0)))res[per.id].done++;
+      }
+    });
+  });
+  return res;
+}
+function totalProg(){
+  const res={};S.people.forEach(p=>{res[p.id]={done:0,total:0};});
+  CARDS_DEF.forEach(card=>{
+    const r=cardProg(card);S.people.forEach(p=>{res[p.id].done+=r[p.id].done;res[p.id].total+=r[p.id].total;});
+  });return res;
+}
+
+// ═══════════════════════════════════════════════════════
+//  NOTE BUTTON
+// ═══════════════════════════════════════════════════════
+function noteBtn(cid,bid,cname,bname){
+  const has=!!getNote(cid,bid);
+  const cn=cname.replace(/'/g,"&#39;").replace(/"/g,"&quot;");
+  const bn=bname.replace(/'/g,"&#39;").replace(/"/g,"&quot;");
+  return `<button class="note-btn${has?' has-note':''}" onclick="event.stopPropagation();openNoteModal('${cid}','${bid}','${cn}','${bn}')">${has?'📝':'＋ 노트'}</button>`;
+}
+
+// ═══════════════════════════════════════════════════════
+//  RENDER ROWS
+// ═══════════════════════════════════════════════════════
+function rMonthly(card,b,per){
+  const active=isActive(card.id,per.id),pd=getBData(b,per.id);
+  const color=per.color,lbl=per.label;
+  if(!active||!pd)return `<div class="pr na"><span class="pr-label" style="color:${color}">${lbl}</span><div class="months-wrap">${MONTHS.map(()=>`<div class="mcell"><span class="m-mo">—</span></div>`).join('')}</div></div>`;
+  return `<div class="pr"><span class="pr-label" style="color:${color}">${lbl}</span>
+    <div class="months-wrap">${(pd.amounts||[]).map((amt,i)=>{
+      if(!moInFilter(i))return'';
+      const key=ck(card.id,b.id,per.id,i),done=isChk(key);
+      const missed=S.missed&&moIsPast(i)&&!done;
+      const urgent=!done&&moIsUrgent(i);
+      const style=done?`background:${color}22;border-color:${color};color:${color};font-weight:600`:'';
+      return `<div class="mcell${missed?' missed':''}${urgent?' urgent-cell':''}" onclick="toggle('${key}')" style="${style}">
+        <span class="m-mo">${MONTHS[i].replace('월','')}</span>
+        <span class="m-amt">${amt}</span>${done?`<span class="m-check">✓</span>`:''}
+      </div>`;
+    }).join('')}</div></div>`;
+}
+function rPeriod(card,b,per){
+  const active=isActive(card.id,per.id),pd=getBData(b,per.id);
+  const color=per.color,lbl=per.label;
+  if(!active||!pd)return `<div class="pr na"><span class="pr-label" style="color:${color}">${lbl}</span><div class="periods-wrap"><div class="pcell">해당 없음</div></div></div>`;
+  return `<div class="pr"><span class="pr-label" style="color:${color}">${lbl}</span>
+    <div class="periods-wrap">${(pd.periods||[]).map((period,i)=>{
+      if(!periodInFilter(period))return'';
+      const key=ck(card.id,b.id,per.id,i),done=isChk(key);
+      const missed=S.missed&&periodIsPast(period)&&!done;
+      const urgent=!done&&periodIsUrgent(period);
+      const style=done?`background:${color}22;border-color:${color};color:${color};`:'';
+      return `<div class="pcell${missed?' missed':''}${urgent?' urgent-cell':''}" onclick="toggle('${key}')" style="${style}">
+        <span class="pcell-cb">${done?'☑':'☐'}</span> ${period}
+      </div>`;
+    }).join('')}</div></div>`;
+}
+function rAnnual(card,b,per){
+  const active=isActive(card.id,per.id),pd=getBData(b,per.id);
+  const color=per.color,lbl=per.label;
+  if(!active||!pd)return `<div class="pr na"><span class="pr-label" style="color:${color}">${lbl}</span><div class="annual-wrap"><div class="annual-cell">해당 없음</div></div></div>`;
+  const key=ck(card.id,b.id,per.id,0),done=isChk(key);
+  const style=done?`background:${color}22;border-color:${color};color:${color};`:'';
+  return `<div class="pr"><span class="pr-label" style="color:${color}">${lbl}</span>
+    <div class="annual-wrap"><div class="annual-cell" onclick="toggle('${key}')" style="${style}">
+      <span class="pcell-cb">${done?'☑':'☐'}</span> ${b.amount}
+    </div></div></div>`;
+}
+
+function rBenefit(card,b){
+  if(b.type==='info')return `<div class="benefit-section"><div class="benefit-label"><div class="benefit-label-left">ℹ️ ${b.name}</div></div><div class="info-row">→ ${b.info}</div></div>`;
+  const amtTag=b.amount?`<span class="amount-tag">${b.amount}</span>`:'';
+  // check if this benefit has any urgent items
+  let hasUrgent=false;
+  S.people.forEach(per=>{
+    if(!isActive(card.id,per.id))return;
+    const pd=getBData(b,per.id);if(!pd)return;
+    if(b.type==='monthly')(pd.amounts||[]).forEach((_,i)=>{if(moIsUrgent(i)&&!isChk(ck(card.id,b.id,per.id,i)))hasUrgent=true;});
+    if(b.type==='period')(pd.periods||[]).forEach((p,i)=>{if(periodIsUrgent(p)&&!isChk(ck(card.id,b.id,per.id,i)))hasUrgent=true;});
+  });
+  const urgTag=hasUrgent?`<span class="expiry-badge">⏰ 만료 임박</span>`:'';
+  const rows=S.people.map(p=>{
+    if(b.type==='monthly')return rMonthly(card,b,p);
+    if(b.type==='period')return rPeriod(card,b,p);
+    if(b.type==='annual')return rAnnual(card,b,p);
+    return'';
+  }).join('');
+  const noteText=getNote(card.id,b.id);
+  const nb=noteBtn(card.id,b.id,card.name,b.name);
+  return `<div class="benefit-section">
+    <div class="benefit-label">
+      <div class="benefit-label-left">${b.name} ${amtTag} ${urgTag}</div>
+      <div class="benefit-label-right">${nb}</div>
+    </div>
+    <div class="player-rows">${rows}</div>
+    ${b.note?`<div class="benefit-note">💡 ${b.note}</div>`:''}
+    ${noteText?`<div class="benefit-user-note"><div class="note-content-area"><div class="note-text-display">📝 ${noteText}</div></div></div>`:''}
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════
+//  CARD VIEW
+// ═══════════════════════════════════════════════════════
+function toggleCard(id){collSet.has(id)?collSet.delete(id):collSet.add(id);saveSt();renderAll();}
+function renderCardView(){
+  document.getElementById('cardsGrid').innerHTML=CARDS_DEF.map(card=>{
+    const prog=cardProg(card),isCol=collSet.has(card.id);
+    const miniProgs=S.people.map(p=>{
+      const pr=prog[p.id];if(!pr||pr.total===0)return'';
+      const pct=Math.round(pr.done/pr.total*100);
+      return `<div class="mini-prog-row">
+        <span class="mini-prog-label" style="color:${p.color}">${p.label}</span>
+        <div class="mini-prog-bar"><div class="mini-prog-fill" style="width:${pct}%;background:${p.color}"></div></div>
+        <span class="mini-prog-pct">${pr.done}/${pr.total}</span>
+      </div>`;
+    }).join('');
+    const actBar=`<div class="activation-bar">
+      <span class="act-label">카드 보유:</span>
+      ${S.people.map(p=>{
+        const on=isActive(card.id,p.id);
+        return `<button class="act-btn ${on?'on':'off'}"
+          onclick="event.stopPropagation();toggleActivation('${card.id}','${p.id}')"
+          style="${on?`border-color:${p.color};color:${p.color};background:${p.color}18`:''}">
+          ${on?'✓':'○'} ${p.label} ${p.name}</button>`;
+      }).join('')}
+    </div>`;
+    return `<div class="card-block${isCol?' collapsed':''}" id="crd-${card.id}">
+      <div class="card-header" onclick="toggleCard('${card.id}')">
+        <div class="card-name">${card.name}</div>
+        <div class="card-right"><div class="mini-progs">${miniProgs}</div><span class="chevron">▼</span></div>
+      </div>
+      ${actBar}
+      <div class="card-body">${card.benefits.map(b=>rBenefit(card,b)).join('')}</div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════
+//  BENEFIT VIEW
+// ═══════════════════════════════════════════════════════
+function getBenefitCats(){
+  const m=new Map();
+  CARDS_DEF.forEach(c=>c.benefits.forEach(b=>{if(b.type!=='info'&&!m.has(b.id))m.set(b.id,b.name);}));
+  return m;
+}
+function selectBenefit(id){S.selBenefit=S.selBenefit===id?null:id;saveSt();renderAll();}
+function renderBenefitView(){
+  const cats=getBenefitCats();
+  document.getElementById('bvFilterBar').innerHTML=
+    `<button class="bfbtn${!S.selBenefit?' active':''}" onclick="selectBenefit(null)">전체</button>`+
+    [...cats.entries()].map(([id,name])=>`<button class="bfbtn${S.selBenefit===id?' active':''}" onclick="selectBenefit('${id}')">${name}</button>`).join('');
+  const toShow=S.selBenefit?[[S.selBenefit,cats.get(S.selBenefit)]]:[...cats.entries()];
+  document.getElementById('bvGrid').innerHTML=toShow.map(([bid,bname])=>{
+    if(!bname)return'';
+    const cards=CARDS_DEF.filter(c=>c.benefits.some(b=>b.id===bid&&b.type!=='info'));
+    if(!cards.length)return'';
+    const sb=cards[0].benefits.find(b=>b.id===bid);
+    const typeLabel=sb.type==='monthly'?'월별':sb.type==='period'?'기간별':'연간';
+    const entries=cards.map(card=>{
+      const b=card.benefits.find(b2=>b2.id===bid);
+      const rows=S.people.map(p=>{
+        if(b.type==='monthly')return rMonthly(card,b,p);
+        if(b.type==='period')return rPeriod(card,b,p);
+        if(b.type==='annual')return rAnnual(card,b,p);
+        return'';
+      }).join('');
+      const amtTag=b.amount?`<span class="amount-tag">${b.amount}</span>`:'';
+      const noteText=getNote(card.id,b.id);
+      const nb=noteBtn(card.id,b.id,card.name,b.name);
+      return `<div class="card-entry">
+        <div class="card-entry-name">💳 ${card.name} ${amtTag} ${nb}</div>
+        <div class="player-rows">${rows}</div>
+        ${b.note?`<div class="benefit-note">💡 ${b.note}</div>`:''}
+        ${noteText?`<div class="benefit-user-note"><div class="note-content-area"><div class="note-text-display">📝 ${noteText}</div></div></div>`:''}
+      </div>`;
+    }).join('');
+    return `<div class="bv-card">
+      <div class="bv-card-head">
+        <div class="bv-card-name">${bname}<span class="type-badge badge-${sb.type}">${typeLabel}</span></div>
+        <span style="font-size:0.66rem;color:var(--muted)">${cards.length}개 카드</span>
+      </div>
+      <div class="bv-card-body">${entries}</div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════
+//  STATS + LEGEND
+// ═══════════════════════════════════════════════════════
+function renderStats(){
+  const prog=totalProg();let allDone=0,allTotal=0;
+  S.people.forEach(p=>{allDone+=prog[p.id].done;allTotal+=prog[p.id].total;});
+  const allPct=allTotal?Math.round(allDone/allTotal*100):0;
+  const yr=String(S.selectedYear);
+  const noteCount=Object.keys(S.notes[yr]||{}).length;
+  const urgCount=computeUrgentItems().length;
+  document.getElementById('statsRow').innerHTML=
+    `<div class="stat-pill"><div class="stat-pill-label">전체 달성률</div><div class="stat-pill-val" style="color:var(--gold)">${allPct}%</div></div>`+
+    S.people.map(p=>{
+      const pr=prog[p.id];
+      return `<div class="stat-pill"><div class="stat-pill-label">${p.label} (${p.name})</div><div class="stat-pill-val" style="color:${p.color}">${pr.done}<span style="font-size:.9rem;color:var(--muted)">/${pr.total}</span></div></div>`;
+    }).join('')+
+    `<div class="stat-pill"><div class="stat-pill-label">남은 항목</div><div class="stat-pill-val" style="color:var(--muted)">${allTotal-allDone}</div></div>`+
+    (urgCount?`<div class="stat-pill" style="border-color:rgba(255,71,87,.35);"><div class="stat-pill-label">⏰ 만료 임박</div><div class="stat-pill-val" style="color:var(--alert)">${urgCount}</div></div>`:'') +
+    `<div class="stat-pill"><div class="stat-pill-label">📝 노트</div><div class="stat-pill-val" style="color:var(--blue)">${noteCount}</div><div class="stat-pill-sub">${S.selectedYear}년</div></div>`;
+}
+function renderLegend(){
+  document.getElementById('legendRow').innerHTML=
+    S.people.map(p=>`<div class="leg"><div class="leg-dot" style="background:${p.color}"></div><span style="color:${p.color};font-weight:600">${p.label}</span> ${p.name}</div>`).join('')+
+    `<div class="leg"><div class="leg-dot" style="background:var(--green)"></div> 완료</div>`;
+}
+
+// ═══════════════════════════════════════════════════════
+//  VIEW SWITCH
+// ═══════════════════════════════════════════════════════
+function switchView(v){
+  S.view=v;
+  document.getElementById('cardView').style.display=v==='card'?'block':'none';
+  document.getElementById('benefitView').style.display=v==='benefit'?'block':'none';
+  document.getElementById('btnCard').classList.toggle('active',v==='card');
+  document.getElementById('btnBenefit').classList.toggle('active',v==='benefit');
+  saveSt();renderAll();
+}
+
+// ═══════════════════════════════════════════════════════
+//  RENDER ALL
+// ═══════════════════════════════════════════════════════
+function renderAll(){
+  renderLegend();renderStats();renderUrgentBanner();
+  if(S.view==='card')renderCardView();
+  else renderBenefitView();
+}
+
+// ═══════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════
+buildYearSelect();
+document.getElementById('btnCard').classList.toggle('active',S.view==='card');
+document.getElementById('btnBenefit').classList.toggle('active',S.view==='benefit');
+document.getElementById('btnMissed').classList.toggle('active',S.missed);
+document.getElementById('cardView').style.display=S.view==='card'?'block':'none';
+document.getElementById('benefitView').style.display=S.view==='benefit'?'block':'none';
+if(S.syncBarOpen){
+  document.getElementById('syncBar').classList.remove('hidden');
+  if(S.syncCode)document.getElementById('syncCodeInput').value=S.syncCode;
+}
+if(S.syncCode)setSyncStatus('ok',`코드: ${S.syncCode} (연결됨)`);
+setPeriod(S.period);
+renderAll();
+
+document.querySelectorAll('.modal-overlay').forEach(el=>{
+  el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('open');});
+});
+// Enter key in sync code input
+document.getElementById('syncCodeInput').addEventListener('keydown',e=>{if(e.key==='Enter')activateSync();});
+</script>
+</body>
+</html>
