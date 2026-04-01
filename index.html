@@ -476,7 +476,7 @@ body.light .value-total{background:rgba(184,138,0,.07);}
     <button class="hbtn" id="btnBenefit" onclick="switchView('benefit')">✨ 혜택별</button>
     <button class="hbtn warn" id="btnMissed" onclick="toggleMissed()">⚠️ 놓친<span class="badge" id="missedBadge" style="display:none"></span></button>
     <button class="hbtn" onclick="openValueModal()" style="border-color:rgba(255,209,102,.4);color:var(--gold);">💰 합산</button>
-    <button class="hbtn" onclick="openAIModal()" style="border-color:rgba(56,180,255,.4);color:var(--blue);">🤖 AI 검색</button>
+
     <button class="hbtn" onclick="openAddModal()" style="border-color:rgba(6,214,160,.4);color:var(--green);">＋ 카드/혜택</button>
   </div>
   <div class="header-right">
@@ -513,31 +513,6 @@ body.light .value-total{background:rgba(184,138,0,.07);}
     </span>
   </div>
   <span id="syncHint" style="font-size:0.6rem;color:var(--muted);font-style:italic;">「새로 만들기」로 생성 후 Bin ID를 다른 기기에서 붙여넣어 연결하세요</span>
-</div>
-
-
-<!-- ── AI 검색 모달 ── -->
-<div class="modal-overlay" id="aiModal">
-  <div class="modal-box" style="max-width:500px;width:95%;">
-    <div class="modal-header">
-      <span>🤖 AI 카드 혜택 검색</span>
-      <button class="modal-close" onclick="closeAIModal()">✕</button>
-    </div>
-    <div class="modal-body">
-      <div style="margin-bottom:12px;">
-        <label style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px;">검색할 카드 선택</label>
-        <select class="add-form-select" id="aiCardSelect">
-          <option value="all">전체 카드 검색</option>
-        </select>
-      </div>
-      <div style="margin-bottom:12px;">
-        <label style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px;">추가 질문 (선택)</label>
-        <input class="add-form-input" id="aiQuery" placeholder="예: 2025년 새로운 혜택이 있나요?" />
-      </div>
-      <button onclick="runAISearch()" style="width:100%;padding:11px;background:rgba(56,180,255,.15);border:1px solid var(--blue);border-radius:8px;color:var(--blue);font-size:0.85rem;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:14px;">🔍 검색</button>
-      <div id="aiResult"></div>
-    </div>
-  </div>
 </div>
 
 <!-- ── 카드/혜택 추가 모달 ── -->
@@ -708,6 +683,20 @@ const CARDS_DEF = [
   { id:'amex_delta_biz', name:'Amex Delta Biz Gold', benefits:[
     { id:'travel', name:'여행 크레딧 (Delta Stays)', type:'annual', amount:'$150/yr', p1:null, p2:{} },
     { id:'perks', name:'Delta 특전', type:'info', info:'첫 번째 수화물 무료 · Zone 5 우선 탑승 · 기내 식음료 20% 할인' }
+  ]},
+  { id:'bilt_palladium', name:'Bilt Palladium', benefits:[
+    { id:'bilt_hotel', name:'Bilt Travel Hotel Credit', type:'period',
+      note:'2박 이상 Bilt Travel 포털 예약 시 적용',
+      p1:{periods:['Jan–Jun ($200)','Jul–Dec ($200)']},
+      p2:{periods:['Jan–Jun ($200)','Jul–Dec ($200)']} },
+    { id:'bilt_cash_annual', name:'Annual Bilt Cash Credit', type:'annual', amount:'$200/yr',
+      note:'매년 1/1 자동 지급. 미사용분 $100까지만 이월',
+      p1:{}, p2:{} },
+    { id:'bilt_priority_pass', name:'Priority Pass', type:'info', info:'무제한 라운지 이용 + 동반 2인 무료' },
+    { id:'bilt_global_entry', name:'Global Entry / TSA PreCheck', type:'annual', amount:'$120/4yr', p1:{}, p2:{} },
+    { id:'bilt_foreign', name:'Foreign Fee', type:'info', info:'없음 (No foreign transaction fee)' },
+    { id:'bilt_earn', name:'적립률', type:'info', info:'2x Bilt Points + 4% Bilt Cash (일반 구매) · 1x Points (렌트/모기지) · 연 $25k까지 포인트 가속기 최대 3x 가능' },
+    { id:'bilt_protections', name:'카드 보호 혜택', type:'info', info:'휴대폰 보험 · 렌터카 보험 · 여행 취소/지연 · 수화물 보험 · 구매 보호 (World Legend Mastercard)' }
   ]}
 ];
 
@@ -1594,61 +1583,6 @@ renderAll();
 document.querySelectorAll('.modal-overlay').forEach(el=>{
   el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('open');});
 });
-
-// ═══════════════════════════════════════════════════════
-//  AI 검색
-// ═══════════════════════════════════════════════════════
-function openAIModal(){
-  // 카드 선택 옵션 채우기
-  const sel = document.getElementById('aiCardSelect');
-  sel.innerHTML = '<option value="all">전체 카드 검색</option>';
-  CARDS_DEF.forEach(c => {
-    const o = document.createElement('option');
-    o.value = c.id; o.textContent = c.name;
-    sel.appendChild(o);
-  });
-  document.getElementById('aiResult').innerHTML = '';
-  document.getElementById('aiQuery').value = '';
-  document.getElementById('aiModal').classList.add('open');
-}
-function closeAIModal(){ document.getElementById('aiModal').classList.remove('open'); }
-
-async function runAISearch(){
-  const cardId = document.getElementById('aiCardSelect').value;
-  const query = document.getElementById('aiQuery').value.trim();
-  const resultEl = document.getElementById('aiResult');
-  resultEl.innerHTML = '<div class="ai-loading">🔄 검색 중...</div>';
-
-  const cardName = cardId === 'all' ? '모든 카드' : CARDS_DEF.find(c=>c.id===cardId)?.name || cardId;
-  const cardList = cardId === 'all'
-    ? CARDS_DEF.map(c => c.name).join(', ')
-    : cardName;
-
-  const prompt = `당신은 미국 신용카드 혜택 전문가입니다.
-다음 카드의 현재 주요 혜택을 알려주세요: ${cardList}
-${query ? '추가 질문: ' + query : ''}
-
-각 카드별로 혜택 이름과 금액/내용을 간결하게 한국어로 정리해주세요.
-변경되었거나 새로 추가된 혜택이 있다면 특별히 언급해주세요.
-답변은 마크다운 없이 plain text로 해주세요.`;
-
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-    const data = await res.json();
-    const text = data.content?.[0]?.text || '결과를 가져오지 못했어요.';
-    resultEl.innerHTML = `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px;font-size:0.82rem;line-height:1.7;white-space:pre-wrap;">${text}</div>`;
-  } catch(e) {
-    resultEl.innerHTML = '<div style="color:var(--alert);font-size:0.82rem;">오류가 발생했어요. 다시 시도해주세요.</div>';
-  }
-}
 
 // ═══════════════════════════════════════════════════════
 //  카드/혜택 수동 추가
