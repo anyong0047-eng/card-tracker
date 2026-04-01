@@ -495,14 +495,24 @@ body.light .value-total{background:rgba(184,138,0,.07);}
   <div class="sync-dot" id="syncDot"></div>
   <span id="syncStatus">동기화 비활성</span>
   <div class="sync-code-wrap">
-    <span style="color:var(--muted);font-size:0.62rem;">코드:</span>
-    <input class="sync-code-input" id="syncCodeInput" maxlength="8" placeholder="ABCD1234" title="공유 코드 (최대 8자)">
-    <button class="sync-btn primary" onclick="activateSync()">연결</button>
-    <button class="sync-btn" onclick="generateSyncCode()">새 코드</button>
-    <button class="sync-btn" onclick="pushSync()">↑ 업로드</button>
-    <button class="sync-btn" onclick="pullSync()">↓ 다운로드</button>
+    <!-- 연결 안된 상태 -->
+    <span id="syncConnectWrap" style="display:flex;gap:6px;align-items:center;">
+      <span style="color:var(--muted);font-size:0.62rem;">Bin ID:</span>
+      <input class="sync-code-input" id="syncCodeInput" maxlength="30" placeholder="붙여넣기 또는 새로 만들기" title="JSONBin Bin ID">
+      <button class="sync-btn primary" onclick="activateSync()">연결</button>
+      <button class="sync-btn" onclick="createNewBin()">🆕 새로 만들기</button>
+    </span>
+    <!-- 연결된 상태 -->
+    <span id="syncConnectedWrap" style="display:none;gap:6px;align-items:center;flex-wrap:wrap;">
+      <span style="color:var(--muted);font-size:0.62rem;">Bin ID:</span>
+      <code id="syncBinIdDisplay" style="font-size:0.65rem;color:var(--green);font-family:monospace;background:var(--surface2);padding:2px 8px;border-radius:4px;border:1px solid var(--border);"></code>
+      <button class="sync-btn" onclick="copyBinId()" title="복사">📋 복사</button>
+      <button class="sync-btn primary" onclick="pushSync()">↑ 업로드</button>
+      <button class="sync-btn" onclick="pullSync()">↓ 다운로드</button>
+      <button class="sync-btn" onclick="disconnectSync()" style="border-color:rgba(255,71,87,.4);color:var(--alert);">연결 해제</button>
+    </span>
   </div>
-  <span style="font-size:0.6rem;color:var(--muted);font-style:italic;">같은 코드를 다른 기기에서 입력하면 데이터가 공유됩니다</span>
+  <span id="syncHint" style="font-size:0.6rem;color:var(--muted);font-style:italic;">「새로 만들기」로 생성 후 Bin ID를 다른 기기에서 붙여넣어 연결하세요</span>
 </div>
 
 
@@ -713,24 +723,43 @@ function defaultState(){
     activation:{}, period:'all', missed:false, view:'card',
     selBenefit:null, collapsed:[], notes:{},
     selectedYear:new Date().getFullYear(),
-    theme:'dark', syncCode:'', syncBarOpen:false
+    theme:'dark',
+    syncBinId:'',   // ← bin ID 자체가 동기화 식별자
+    syncBarOpen:false
   };
 }
 function loadSt(){
   try{
-    const r=JSON.parse(localStorage.getItem('ctv5')||'{}');
+    // ctv5 → ctv8 키 변경 (하지만 ctv5 데이터가 있으면 마이그레이션)
+    let raw=localStorage.getItem('ctv8');
+    if(!raw) raw=localStorage.getItem('ctv5'); // 기존 버전 마이그레이션
+    const r=JSON.parse(raw||'{}');
     const d=defaultState();
-    return {
+    const st={
       checks:r.checks||{}, people:r.people||d.people,
       activation:r.activation||{}, period:r.period||'all',
       missed:r.missed||false, view:r.view||'card',
       selBenefit:r.selBenefit||null, collapsed:r.collapsed||[],
       notes:r.notes||{}, selectedYear:r.selectedYear||d.selectedYear,
-      theme:r.theme||'dark', syncCode:r.syncCode||'', syncBarOpen:r.syncBarOpen||false
+      theme:r.theme||'dark',
+      syncBinId:r.syncBinId||'',  // ← 올바르게 로딩
+      syncBarOpen:r.syncBarOpen||false
     };
+    // 커스텀 카드 복원 (저장된 경우)
+    if(r.customCards&&r.customCards.length>0){
+      r.customCards.forEach(rc=>{
+        if(!CARDS_DEF.find(c=>c.id===rc.id)) CARDS_DEF.push(rc);
+      });
+    }
+    return st;
   }catch(e){return defaultState();}
 }
-function saveSt(){try{localStorage.setItem('ctv5',JSON.stringify({...S,collapsed:[...collSet]}));}catch(e){}}
+function saveSt(){
+  try{
+    const customCards=CARDS_DEF.filter(c=>c._custom);
+    localStorage.setItem('ctv8',JSON.stringify({...S,collapsed:[...collSet],customCards}));
+  }catch(e){}
+}
 
 const S=loadSt();
 const collSet=new Set(S.collapsed);
@@ -1021,135 +1050,174 @@ function exportCSV(){
 }
 
 // ═══════════════════════════════════════════════════════
-//  SYNC (JSONBin.io)
+//  SYNC (JSONBin.io) — v8 재설계
+//
+//  핵심 원칙: Bin ID 자체가 동기화 코드
+//  - 새 기기에서 「새로 만들기」 → bin 생성 → bin ID 표시
+//  - 그 bin ID를 다른 기기에서 입력 → 직접 연결
+//  - bin 목록 검색(불안정)을 완전히 제거
 // ═══════════════════════════════════════════════════════
 const JSONBIN_API_KEY='$2a$10$p6I8pCsvIduNMaDA8l6vpeO.B2kf/YPfCnwGc5cCdpt6tdypFAczi';
 const JSONBIN_BASE='https://api.jsonbin.io/v3';
 
 function setSyncStatus(state,text){
-  const dot=document.getElementById('syncDot');
-  const status=document.getElementById('syncStatus');
-  dot.className='sync-dot'+(state?' '+state:'');
-  status.textContent=text;
-}
-let _syncTimer=null;
-function syncDebounce(){
-  if(!S.syncCode)return;
-  clearTimeout(_syncTimer);
-  _syncTimer=setTimeout(()=>pushSync(true),3000);
+  document.getElementById('syncDot').className='sync-dot'+(state?' '+state:'');
+  document.getElementById('syncStatus').textContent=text;
 }
 
-function generateSyncCode(){
-  const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let code='';for(let i=0;i<6;i++)code+=chars[Math.floor(Math.random()*chars.length)];
-  document.getElementById('syncCodeInput').value=code;
+function _showSyncConnected(binId){
+  document.getElementById('syncConnectWrap').style.display='none';
+  document.getElementById('syncConnectedWrap').style.display='flex';
+  document.getElementById('syncBinIdDisplay').textContent=binId;
+  document.getElementById('syncHint').textContent='이 Bin ID를 다른 기기의 동기화 바에 붙여넣고 「연결」을 누르세요';
+}
+function _showSyncDisconnected(){
+  document.getElementById('syncConnectWrap').style.display='flex';
+  document.getElementById('syncConnectedWrap').style.display='none';
+  document.getElementById('syncCodeInput').value='';
+  document.getElementById('syncHint').textContent='「새로 만들기」로 생성 후 Bin ID를 다른 기기에서 붙여넣어 연결하세요';
+}
+
+function copyBinId(){
+  const id=document.getElementById('syncBinIdDisplay').textContent;
+  navigator.clipboard.writeText(id).then(()=>{
+    setSyncStatus('ok','Bin ID 복사됨! 다른 기기에서 붙여넣어 연결하세요');
+  }).catch(()=>{
+    // fallback
+    const ta=document.createElement('textarea');
+    ta.value=id;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);
+    setSyncStatus('ok','Bin ID 복사됨!');
+  });
+}
+
+function disconnectSync(){
+  if(!confirm('동기화 연결을 해제할까요? 로컬 데이터는 유지됩니다.'))return;
+  S.syncBinId='';saveSt();
+  _showSyncDisconnected();
+  setSyncStatus('','동기화 비활성');
+}
+
+let _syncTimer=null;
+function syncDebounce(){
+  if(!S.syncBinId)return;
+  clearTimeout(_syncTimer);
+  _syncTimer=setTimeout(()=>pushSync(true),3000);
 }
 
 function toggleSyncBar(){
   S.syncBarOpen=!S.syncBarOpen;
   document.getElementById('syncBar').classList.toggle('hidden',!S.syncBarOpen);
-  if(S.syncBarOpen&&S.syncCode)document.getElementById('syncCodeInput').value=S.syncCode;
+  if(S.syncBarOpen){
+    if(S.syncBinId) _showSyncConnected(S.syncBinId);
+    else _showSyncDisconnected();
+  }
   saveSt();
 }
 
-function activateSync(){
-  const code=document.getElementById('syncCodeInput').value.trim().toUpperCase();
-  if(code.length<4){alert('코드는 4자 이상 입력하세요.');return;}
-  S.syncCode=code;saveSt();
-  setSyncStatus('busy','연결 중…');
-  pullSync();
-}
-
-// 코드 → JSONBin bin ID 매핑을 위해 bin name에 코드를 저장
-async function findBinByCode(code){
+// 다른 기기에서 Bin ID를 입력하고 「연결」을 누를 때
+async function activateSync(){
+  const binId=document.getElementById('syncCodeInput').value.trim();
+  if(binId.length<10){alert('올바른 Bin ID를 붙여넣어 주세요.\n(JSONBin에서 생성된 ID는 24자 hex 형식입니다)');return;}
+  setSyncStatus('busy','연결 확인 중…');
   try{
-    const r=await fetch(`${JSONBIN_BASE}/b?meta=false`,{
+    // ID가 실제로 존재하는지 바로 확인
+    const r=await fetch(`${JSONBIN_BASE}/b/${binId}/latest`,{
       headers:{'X-Master-Key':JSONBIN_API_KEY}
     });
-    if(!r.ok)return null;
-    const bins=await r.json();
-    const found=(bins.result||[]).find(b=>b.snippetMeta&&b.snippetMeta.name===`card-tracker-${code}`);
-    return found?found.id:null;
-  }catch(e){return null;}
+    if(r.status===404){setSyncStatus('err','Bin ID를 찾을 수 없어요. ID를 다시 확인하세요.');return;}
+    if(!r.ok)throw new Error(r.status);
+    const data=await r.json();
+    const remote=data.record;
+    // 성공 — bin ID 저장 후 데이터 머지
+    S.syncBinId=binId;
+    _applyRemote(remote,binId);
+    saveSt();renderAll();buildYearSelect();
+    _showSyncConnected(binId);
+    setSyncStatus('ok',`연결 완료 · ${new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})}`);
+  }catch(e){setSyncStatus('err','연결 실패 — Bin ID 확인 또는 네트워크 점검');}
+}
+
+// 이 기기에서 처음 「새로 만들기」를 누를 때
+async function createNewBin(){
+  setSyncStatus('busy','새 동기화 저장소 생성 중…');
+  try{
+    const payload=_buildPayload();
+    const r=await fetch(`${JSONBIN_BASE}/b`,{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'X-Master-Key':JSONBIN_API_KEY,
+        'X-Bin-Name':'card-tracker',
+        'X-Bin-Private':'true'
+      },
+      body:JSON.stringify(payload)
+    });
+    if(!r.ok)throw new Error(r.status);
+    const data=await r.json();
+    const binId=data.metadata.id;
+    S.syncBinId=binId;
+    saveSt();
+    _showSyncConnected(binId);
+    setSyncStatus('ok',`생성 완료! Bin ID를 복사해 다른 기기에서 연결하세요`);
+  }catch(e){setSyncStatus('err','생성 실패 — 네트워크 확인');}
+}
+
+function _buildPayload(){
+  // 커스텀 카드/혜택도 함께 저장
+  const customCards=CARDS_DEF.filter(c=>c._custom);
+  return {
+    ...S,
+    collapsed:[...collSet],
+    customCards  // ← 별도 키로 저장
+  };
+}
+
+function _applyRemote(remote,binId){
+  // 커스텀 카드 복원
+  if(remote.customCards&&remote.customCards.length>0){
+    remote.customCards.forEach(rc=>{
+      if(!CARDS_DEF.find(c=>c.id===rc.id)) CARDS_DEF.push(rc);
+    });
+  }
+  Object.assign(S,{
+    checks:remote.checks||S.checks,
+    people:remote.people||S.people,
+    activation:remote.activation||S.activation,
+    notes:remote.notes||S.notes,
+    period:remote.period||S.period,
+    missed:remote.missed??S.missed,
+    view:remote.view||S.view,
+    selBenefit:remote.selBenefit??S.selBenefit,
+    selectedYear:remote.selectedYear||S.selectedYear,
+    syncBinId:binId
+  });
+  if(remote.collapsed) remote.collapsed.forEach(id=>collSet.add(id));
 }
 
 async function pushSync(silent=false){
-  if(!S.syncCode){if(!silent)alert('먼저 동기화 코드를 연결하세요.');return;}
+  if(!S.syncBinId){if(!silent)alert('먼저 동기화를 연결하세요.\n🔗 아이콘 → 「새로 만들기」');return;}
   setSyncStatus('busy','업로드 중…');
   try{
-    const payload={...S,collapsed:[...collSet]};
-    // bin ID가 저장되어 있으면 업데이트, 없으면 새로 생성
-    let binId=S.syncBinId||null;
-    if(!binId){
-      // 새 bin 생성
-      const r=await fetch(`${JSONBIN_BASE}/b`,{
-        method:'POST',
-        headers:{
-          'Content-Type':'application/json',
-          'X-Master-Key':JSONBIN_API_KEY,
-          'X-Bin-Name':`card-tracker-${S.syncCode}`,
-          'X-Bin-Private':'true'
-        },
-        body:JSON.stringify(payload)
-      });
-      if(!r.ok)throw new Error(r.status);
-      const data=await r.json();
-      binId=data.metadata.id;
-      S.syncBinId=binId;
-      saveSt();
-    } else {
-      // 기존 bin 업데이트
-      const r=await fetch(`${JSONBIN_BASE}/b/${binId}`,{
-        method:'PUT',
-        headers:{
-          'Content-Type':'application/json',
-          'X-Master-Key':JSONBIN_API_KEY
-        },
-        body:JSON.stringify(payload)
-      });
-      if(!r.ok)throw new Error(r.status);
-    }
+    const r=await fetch(`${JSONBIN_BASE}/b/${S.syncBinId}`,{
+      method:'PUT',
+      headers:{'Content-Type':'application/json','X-Master-Key':JSONBIN_API_KEY},
+      body:JSON.stringify(_buildPayload())
+    });
+    if(!r.ok)throw new Error(r.status);
     setSyncStatus('ok',`업로드 완료 · ${new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})}`);
   }catch(e){setSyncStatus('err','업로드 실패 — 네트워크 확인');}
 }
 
 async function pullSync(){
-  if(!S.syncCode){alert('먼저 동기화 코드를 연결하세요.');return;}
+  if(!S.syncBinId){alert('먼저 동기화를 연결하세요.\n🔗 아이콘 → 「새로 만들기」 또는 Bin ID 입력');return;}
   setSyncStatus('busy','다운로드 중…');
   try{
-    let binId=S.syncBinId||null;
-    if(!binId){
-      // bin 목록에서 코드로 찾기
-      const r=await fetch(`${JSONBIN_BASE}/b?meta=false`,{
-        headers:{'X-Master-Key':JSONBIN_API_KEY}
-      });
-      if(!r.ok)throw new Error(r.status);
-      const bins=await r.json();
-      const found=(bins.result||[]).find(b=>b.snippetMeta&&b.snippetMeta.name===`card-tracker-${S.syncCode}`);
-      if(!found){setSyncStatus('ok','코드 연결됨 (데이터 없음 — 먼저 업로드하세요)');return;}
-      binId=found.id;
-      S.syncBinId=binId;
-      saveSt();
-    }
-    const r=await fetch(`${JSONBIN_BASE}/b/${binId}/latest`,{
+    const r=await fetch(`${JSONBIN_BASE}/b/${S.syncBinId}/latest`,{
       headers:{'X-Master-Key':JSONBIN_API_KEY}
     });
     if(!r.ok)throw new Error(r.status);
     const data=await r.json();
-    const remote=data.record;
-    Object.assign(S,{
-      checks:remote.checks||S.checks,
-      people:remote.people||S.people,
-      activation:remote.activation||S.activation,
-      notes:remote.notes||S.notes,
-      period:remote.period||S.period,
-      missed:remote.missed??S.missed,
-      view:remote.view||S.view,
-      selBenefit:remote.selBenefit??S.selBenefit,
-      selectedYear:remote.selectedYear||S.selectedYear,
-      syncBinId:remote.syncBinId||binId
-    });
-    if(remote.collapsed)(remote.collapsed).forEach(id=>collSet.add(id));
+    _applyRemote(data.record,S.syncBinId);
     saveSt();renderAll();buildYearSelect();
     setSyncStatus('ok',`다운로드 완료 · ${new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})}`);
   }catch(e){setSyncStatus('err','다운로드 실패 — 네트워크 확인');}
@@ -1514,9 +1582,12 @@ document.getElementById('cardView').style.display=S.view==='card'?'block':'none'
 document.getElementById('benefitView').style.display=S.view==='benefit'?'block':'none';
 if(S.syncBarOpen){
   document.getElementById('syncBar').classList.remove('hidden');
-  if(S.syncCode)document.getElementById('syncCodeInput').value=S.syncCode;
+  if(S.syncBinId) _showSyncConnected(S.syncBinId);
+  else _showSyncDisconnected();
+} else {
+  // 연결은 돼 있지만 바가 닫혀 있는 경우에도 상태 표시
+  if(S.syncBinId) setSyncStatus('ok',`연결됨 (Bin: ${S.syncBinId.slice(0,8)}…)`);
 }
-if(S.syncCode)setSyncStatus('ok',`코드: ${S.syncCode} (연결됨)`);
 setPeriod(S.period);
 renderAll();
 
@@ -1611,7 +1682,7 @@ function addNewCard(){
   CARDS_DEF.push({ id, name, benefits:[], _custom:true });
   document.getElementById('newCardName').value = '';
   document.getElementById('newCardId').value = '';
-  renderAll();
+  saveSt(); renderAll(); syncDebounce(); // ← 저장 + 동기화 트리거
   alert(`"${name}" 카드가 추가됐어요!`);
   closeAddModal();
 }
@@ -1649,7 +1720,7 @@ function addNewBenefit(){
   card.benefits.push(benefit);
   document.getElementById('newBenefitName').value = '';
   document.getElementById('newBenefitAmount').value = '';
-  renderAll();
+  saveSt(); renderAll(); syncDebounce(); // ← 저장 + 동기화 트리거
   alert(`"${name}" 혜택이 ${card.name}에 추가됐어요!`);
   closeAddModal();
 }
