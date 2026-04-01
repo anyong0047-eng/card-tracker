@@ -620,65 +620,112 @@ const MONTHS = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','
 const MO_MAP = {Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
 
 const CARDS_DEF = [
+  // ── AMEX PLATINUM (개인) ── 2025 리프레시 기준 / 연회비 $895
   { id:'amex_plat_personal', name:'Amex Plat (개인)', benefits:[
     { id:'uber_cash', name:'Uber Cash', type:'monthly',
+      note:'12월은 $20 보너스 포함 $35',
       p1:{amounts:['$15','$15','$15','$15','$15','$15','$15','$15','$15','$15','$15','$35']},
       p2:{amounts:['$15','$15','$15','$15','$15','$15','$15','$15','$15','$15','$15','$35']} },
+    { id:'uber_one', name:'Uber One Credit', type:'annual', amount:'$120/yr', p1:{}, p2:{} },
     { id:'lululemon', name:'Lululemon Credit', type:'period',
+      note:'아울렛 제외, lululemon.com 포함',
       p1:{periods:['Jan–Mar ($75)','Apr–Jun ($75)','Jul–Sep ($75)','Oct–Dec ($75)']},
       p2:{periods:['Jan–Mar ($75)','Apr–Jun ($75)','Jul–Sep ($75)','Oct–Dec ($75)']} },
     { id:'resy', name:'Resy Credit', type:'period',
+      note:'미국 Resy 레스토랑 결제 시 적용',
       p1:{periods:['Jan–Mar ($100)','Apr–Jun ($100)','Jul–Sep ($100)','Oct–Dec ($100)']},
       p2:{periods:['Jan–Mar ($100)','Apr–Jun ($100)','Jul–Sep ($100)','Oct–Dec ($100)']} },
     { id:'saks', name:'Saks Fifth Ave', type:'period',
       p1:{periods:['Jan–Jun ($50)','Jul–Dec ($50)']},
       p2:{periods:['Jan–Jun ($50)','Jul–Dec ($50)']} },
-    { id:'uber_one', name:'Uber One Credit', type:'annual', amount:'$120/yr', p1:{}, p2:{} },
+    { id:'equinox', name:'Equinox Credit', type:'annual', amount:'$300/yr',
+      note:'Equinox 멤버십 또는 Equinox+ 디지털 구독',
+      p1:{}, p2:{} },
     { id:'oura', name:'Oura Ring Credit', type:'annual', amount:'$200/yr', p1:{}, p2:{} },
-    { id:'airline', name:'Airline Credit', type:'annual', amount:'$200/yr', p1:{}, p2:{} },
+    { id:'airline', name:'Airline Credit (선택 항공사)', type:'annual', amount:'$200/yr',
+      note:'수화물 수수료·좌석 업그레이드 등 부대비용 (항공권 구매 불가)',
+      p1:{}, p2:{} },
     { id:'hotel', name:'Hotel Credit (FHR / Collection)', type:'period',
+      note:'AmexTravel.com 사전 결제 필수. Hotel Collection은 2박 이상',
       p1:{periods:['Jan–Jun ($300)','Jul–Dec ($300)']},
       p2:{periods:['Jan–Jun ($300)','Jul–Dec ($300)']} },
     { id:'walmart', name:'Walmart+', type:'monthly',
+      note:'$12.95/월 멤버십 크레딧',
       p1:{amounts:Array(12).fill('$12.95')}, p2:{amounts:Array(12).fill('$12.95')} },
     { id:'digital', name:'Digital Entertainment Credit', type:'monthly',
+      note:'Disney+, Hulu, ESPN+, Peacock, NYT, WSJ, YouTube Premium/TV, Paramount+',
       p1:{amounts:Array(12).fill('$25')}, p2:{amounts:Array(12).fill('$25')} },
     { id:'clear', name:'CLEAR Plus', type:'annual', amount:'$209/yr', p1:{}, p2:{} },
     { id:'global_entry', name:'Global Entry', type:'annual', amount:'$120/4yr', p1:{}, p2:{} },
     { id:'foreign', name:'Foreign Fee', type:'info', info:'없음 (No foreign transaction fee)' },
-    { id:'match', name:'Status Matching', type:'info', info:'힐튼 골드 / 메리어트 골드' }
+    { id:'match', name:'호텔 엘리트 상태', type:'info', info:'힐튼 골드 · 메리어트 골드 (enrollment 필요)' },
+    { id:'lounge', name:'라운지 액세스', type:'info', info:'Centurion Lounges · Priority Pass Select · Delta Sky Club 10회/년 (Delta 탑승 시) · Plaza Premium 등 1,550+ 라운지' }
   ]},
+
+  // ── AMEX PLATINUM (Biz) ── 연회비 $895
   { id:'amex_plat_biz', name:'Amex Plat (Biz)', benefits:[
-    { id:'hilton_resort', name:'Hilton Resort Credit', type:'period',
-      note:'힐튼 애너하임 스벅 기카 충전용',
+    { id:'hilton_biz', name:'Hilton Hotel Credit', type:'period',
+      note:'힐튼 애너하임 스벅 기카 충전용. Hilton for Business 회원 등록 필요',
       p1:{periods:['Jan–Mar ($50)','Apr–Jun ($50)','Jul–Sep ($50)','Oct–Dec ($50)']}, p2:null },
-    { id:'airline', name:'Airline Credit', type:'annual', amount:'$200/yr', p1:{}, p2:null },
+    { id:'airline', name:'Airline Credit (선택 항공사)', type:'annual', amount:'$200/yr',
+      note:'수화물 수수료 등 부대비용',
+      p1:{}, p2:null },
     { id:'hotel', name:'Hotel Credit (FHR / Collection)', type:'period',
+      note:'AmexTravel.com 사전 결제 필수. Hotel Collection은 2박 이상',
       p1:{periods:['Jan–Jun ($300)','Jul–Dec ($300)']}, p2:null },
-    { id:'dell', name:'Dell Credit', type:'annual', amount:'$150/yr', p1:{}, p2:null },
+    { id:'dell', name:'Dell Credit', type:'annual', amount:'$150/yr',
+      note:'미국 Dell 직접 구매. $5,000 이상 시 추가 $1,000 크레딧',
+      p1:{}, p2:null },
+    { id:'adobe', name:'Adobe Credit', type:'annual', amount:'$250/yr',
+      note:'Adobe 직접 구매 $600 이상 시 적용',
+      p1:{}, p2:null },
+    { id:'indeed', name:'Indeed Credit', type:'period',
+      note:'채용 광고 등 Indeed 미국 구매',
+      p1:{periods:['Jan–Mar ($90)','Apr–Jun ($90)','Jul–Sep ($90)','Oct–Dec ($90)']}, p2:null },
     { id:'wireless', name:'Wireless Cell Credit', type:'monthly',
+      note:'미국 통신사 직접 결제',
       p1:{amounts:Array(12).fill('$10')}, p2:null },
     { id:'clear', name:'CLEAR Plus', type:'annual', amount:'$209/yr', p1:{}, p2:null },
     { id:'global_entry', name:'Global Entry', type:'annual', amount:'$120/4yr', p1:{}, p2:null },
-    { id:'foreign', name:'Foreign Fee', type:'info', info:'없음 (No foreign transaction fee)' }
+    { id:'foreign', name:'Foreign Fee', type:'info', info:'없음 (No foreign transaction fee)' },
+    { id:'lounge_biz', name:'라운지 액세스', type:'info', info:'Centurion Lounges · Priority Pass Select · Delta Sky Club 10회/년 · 1,550+ 라운지' }
   ]},
+
+  // ── AMEX GOLD ── 연회비 $325
   { id:'amex_gold', name:'Amex Gold', benefits:[
-    { id:'dunkin', name:'Dunkin Credit', type:'monthly', p1:null, p2:{amounts:Array(12).fill('$7')} },
-    { id:'grubhub', name:'Grubhub (Dining Credit)', type:'monthly', p1:null, p2:{amounts:Array(12).fill('$10')} },
-    { id:'uber_cash', name:'Uber Cash', type:'monthly', p1:null, p2:{amounts:Array(12).fill('$10')} },
-    { id:'resy', name:'Resy Credit', type:'period', p1:null, p2:{periods:['Jan–Jun ($50)','Jul–Dec ($50)']} },
-    { id:'hotel', name:'Hotel Credit (FHR / Collection)', type:'annual', amount:'$100/yr', p1:null, p2:{} },
+    { id:'dunkin', name:'Dunkin\' Credit', type:'monthly',
+      note:'미국 Dunkin\' 매장 결제 시',
+      p1:null, p2:{amounts:Array(12).fill('$7')} },
+    { id:'dining_credit', name:'Dining Credit', type:'monthly',
+      note:'Grubhub, The Cheesecake Factory, Goldbelly, Wine.com, Five Guys',
+      p1:null, p2:{amounts:Array(12).fill('$10')} },
+    { id:'uber_cash', name:'Uber Cash', type:'monthly',
+      note:'미국 Uber/Uber Eats. 미사용분 미이월',
+      p1:null, p2:{amounts:Array(12).fill('$10')} },
+    { id:'resy', name:'Resy Credit', type:'annual', amount:'$100/yr',
+      note:'미국 Resy 레스토랑 결제 시. enrollment 필요',
+      p1:null, p2:{} },
+    { id:'hotel', name:'Hotel Collection Credit', type:'info',
+      info:'$100 온프로퍼티 크레딧 (2박 이상, AmexTravel.com 예약 시)' },
     { id:'foreign', name:'Foreign Fee', type:'info', info:'없음 (No foreign transaction fee)' }
   ]},
+
+  // ── 힐튼 어스파이어 ── 연회비 $550
   { id:'hilton_aspire', name:'힐튼 어스파이어', benefits:[
     { id:'hilton_resort', name:'Hilton Resort Credit', type:'period',
+      note:'참여 힐튼 리조트에서 직접 결제. 객실 요금·식음료·스파 등 포함',
       p1:{periods:['Jan–Jun ($200)','Jul–Dec ($200)']}, p2:{periods:['Jan–Jun ($200)','Jul–Dec ($200)']} },
     { id:'airline', name:'Airline Credit', type:'period',
+      note:'항공사 또는 AmexTravel.com 직접 구매. registration 불필요',
       p1:{periods:['Jan–Mar ($50)','Apr–Jun ($50)','Jul–Sep ($50)','Oct–Dec ($50)']},
       p2:{periods:['Jan–Mar ($50)','Apr–Jun ($50)','Jul–Sep ($50)','Oct–Dec ($50)']} },
     { id:'clear', name:'CLEAR Plus', type:'annual', amount:'$209/yr', p1:{}, p2:{} },
+    { id:'free_night', name:'연간 무료 숙박권 (Free Night)', type:'annual', amount:'연 1회',
+      note:'매년 카드 갱신 시 발급. 참여 힐튼 전 객실 사용 가능',
+      p1:{}, p2:{} },
     { id:'foreign', name:'Foreign Fee', type:'info', info:'없음 (No foreign transaction fee)' },
-    { id:'special', name:'특별 혜택', type:'info', info:'무료 숙박권 + Conrad/Waldorf Astoria 숙박 크레딧 $100 (2박 이상 예약시)' }
+    { id:'diamond', name:'힐튼 Diamond 상태', type:'info', info:'카드 보유 중 자동 유지. 조식·라운지·업그레이드·WiFi 포함' },
+    { id:'special', name:'Conrad/Waldorf 혜택', type:'info', info:'$100 온프로퍼티 크레딧 (2박 이상 예약 시)' }
   ]},
   { id:'amex_delta_biz', name:'Amex Delta Biz Gold', benefits:[
     { id:'travel', name:'여행 크레딧 (Delta Stays)', type:'annual', amount:'$150/yr', p1:null, p2:{} },
@@ -713,15 +760,15 @@ function defaultState(){
     selBenefit:null, collapsed:[], notes:{},
     selectedYear:new Date().getFullYear(),
     theme:'dark',
-    syncBinId:'',   // ← bin ID 자체가 동기화 식별자
-    syncBarOpen:false
+    syncBinId:'',
+    syncBarOpen:false,
+    hiddenCards:[]
   };
 }
 function loadSt(){
   try{
-    // ctv5 → ctv8 키 변경 (하지만 ctv5 데이터가 있으면 마이그레이션)
     let raw=localStorage.getItem('ctv8');
-    if(!raw) raw=localStorage.getItem('ctv5'); // 기존 버전 마이그레이션
+    if(!raw) raw=localStorage.getItem('ctv5');
     const r=JSON.parse(raw||'{}');
     const d=defaultState();
     const st={
@@ -731,8 +778,9 @@ function loadSt(){
       selBenefit:r.selBenefit||null, collapsed:r.collapsed||[],
       notes:r.notes||{}, selectedYear:r.selectedYear||d.selectedYear,
       theme:r.theme||'dark',
-      syncBinId:r.syncBinId||'',  // ← 올바르게 로딩
-      syncBarOpen:r.syncBarOpen||false
+      syncBinId:r.syncBinId||'',
+      syncBarOpen:r.syncBarOpen||false,
+      hiddenCards:r.hiddenCards||[]
     };
     // 커스텀 카드 복원 (저장된 경우)
     if(r.customCards&&r.customCards.length>0){
@@ -1178,7 +1226,8 @@ function _applyRemote(remote,binId){
     view:remote.view||S.view,
     selBenefit:remote.selBenefit??S.selBenefit,
     selectedYear:remote.selectedYear||S.selectedYear,
-    syncBinId:binId
+    syncBinId:binId,
+    hiddenCards:remote.hiddenCards||S.hiddenCards||[]
   });
   if(remote.collapsed) remote.collapsed.forEach(id=>collSet.add(id));
 }
@@ -1431,8 +1480,39 @@ function rBenefit(card,b){
 //  CARD VIEW
 // ═══════════════════════════════════════════════════════
 function toggleCard(id){collSet.has(id)?collSet.delete(id):collSet.add(id);saveSt();renderAll();}
+
+function deleteCard(cardId){
+  const card=CARDS_DEF.find(c=>c.id===cardId);
+  if(!card)return;
+  const isCustom=!!card._custom;
+  const msg=isCustom
+    ? `"${card.name}" 카드를 완전히 삭제할까요?\n체크 데이터와 노트도 함께 삭제됩니다.`
+    : `"${card.name}" 카드를 숨길까요?\n(기본 내장 카드는 완전 삭제 대신 숨김 처리됩니다)\n다시 표시하려면 설정에서 복원할 수 있어요.`;
+  if(!confirm(msg))return;
+
+  if(isCustom){
+    // 커스텀 카드: 완전 삭제
+    const idx=CARDS_DEF.findIndex(c=>c.id===cardId);
+    if(idx>-1)CARDS_DEF.splice(idx,1);
+  } else {
+    // 기본 카드: 숨김 처리
+    if(!S.hiddenCards)S.hiddenCards=[];
+    if(!S.hiddenCards.includes(cardId))S.hiddenCards.push(cardId);
+  }
+  // 관련 체크·노트·activation 정리
+  Object.keys(S.checks).forEach(k=>{if(k.includes(`|${cardId}|`))delete S.checks[k];});
+  delete S.activation[cardId];
+  Object.values(S.notes).forEach(yr=>{
+    Object.keys(yr).forEach(k=>{if(k.startsWith(cardId+':'))delete yr[k];});
+  });
+  collSet.delete(cardId);
+  saveSt();renderAll();syncDebounce();
+}
+
 function renderCardView(){
-  document.getElementById('cardsGrid').innerHTML=CARDS_DEF.map(card=>{
+  const hidden=S.hiddenCards||[];
+  const visibleCards=CARDS_DEF.filter(c=>!hidden.includes(c.id));
+  document.getElementById('cardsGrid').innerHTML=visibleCards.map(card=>{
     const prog=cardProg(card),isCol=collSet.has(card.id);
     const miniProgs=S.people.map(p=>{
       const pr=prog[p.id];if(!pr||pr.total===0)return'';
@@ -1452,16 +1532,27 @@ function renderCardView(){
           style="${on?`border-color:${p.color};color:${p.color};background:${p.color}18`:''}">
           ${on?'✓':'○'} ${p.label} ${p.name}</button>`;
       }).join('')}
+      <button class="act-btn" style="margin-left:auto;border-color:rgba(255,71,87,.35);color:var(--alert);opacity:.7;"
+        onclick="event.stopPropagation();deleteCard('${card.id}')"
+        title="${card._custom?'카드 삭제':'카드 숨기기'}">
+        ${card._custom?'🗑️ 삭제':'🙈 숨기기'}
+      </button>
     </div>`;
     return `<div class="card-block${isCol?' collapsed':''}" id="crd-${card.id}">
       <div class="card-header" onclick="toggleCard('${card.id}')">
-        <div class="card-name">${card.name}</div>
+        <div class="card-name">${card.name}${card._custom?'<span style="font-size:0.55rem;color:var(--muted);font-family:\'DM Sans\',sans-serif;font-weight:500;letter-spacing:0;margin-left:4px;">커스텀</span>':''}</div>
         <div class="card-right"><div class="mini-progs">${miniProgs}</div><span class="chevron">▼</span></div>
       </div>
       ${actBar}
       <div class="card-body">${card.benefits.map(b=>rBenefit(card,b)).join('')}</div>
     </div>`;
-  }).join('');
+  }).join('')+(hidden.length?`<div style="font-size:0.65rem;color:var(--muted);text-align:center;padding:10px;">
+    숨긴 카드 ${hidden.length}개 · <button onclick="restoreHiddenCards()" style="background:none;border:none;color:var(--p1);cursor:pointer;font-size:0.65rem;text-decoration:underline;">모두 복원</button>
+  </div>`:'');
+}
+
+function restoreHiddenCards(){
+  S.hiddenCards=[];saveSt();renderAll();
 }
 
 // ═══════════════════════════════════════════════════════
