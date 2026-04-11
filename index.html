@@ -1262,6 +1262,9 @@ async function pullSync(){
   }catch(e){setSyncStatus('err','다운로드 실패 — 네트워크 확인');}
 }
 
+// 온라인 복구 시 자동 호출용
+async function syncFromCloud() { await pullSync(); }
+
 // ═══════════════════════════════════════════════════════
 //  PWA — INSTALL
 // ═══════════════════════════════════════════════════════
@@ -1659,6 +1662,31 @@ if(S.syncBarOpen){
 }
 setPeriod(S.period);
 renderAll();
+
+// ── 앱 시작 시 자동 동기화 ──────────────────────────────────────
+// 어떤 기기에서 열어도 고정 Bin ID로 자동 연결·다운로드
+(async function autoSync() {
+  const FIXED_BIN = '69cda784aaba882197b7838b';
+  // Bin ID가 없거나 다른 경우 고정값으로 덮어쓰기
+  if (S.syncBinId !== FIXED_BIN) {
+    S.syncBinId = FIXED_BIN;
+    saveSt();
+  }
+  if (!navigator.onLine) return; // 오프라인이면 패스
+  setSyncStatus('busy', '동기화 중…');
+  try {
+    const r = await fetch(`${JSONBIN_BASE}/b/${FIXED_BIN}/latest`, {
+      headers: { 'X-Master-Key': JSONBIN_API_KEY }
+    });
+    if (!r.ok) throw new Error(r.status);
+    const data = await r.json();
+    _applyRemote(data.record, FIXED_BIN);
+    saveSt(); renderAll(); buildYearSelect();
+    setSyncStatus('ok', `동기화 완료 · ${new Date().toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit'})}`);
+  } catch(e) {
+    setSyncStatus('err', '동기화 실패 — 네트워크 확인');
+  }
+})();
 
 document.querySelectorAll('.modal-overlay').forEach(el=>{
   el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('open');});
