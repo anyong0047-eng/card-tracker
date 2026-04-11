@@ -1,0 +1,28 @@
+{
+  "name": "카드 트래커",
+  "short_name": "카드 트래커",
+  "description": "신용카드 혜택 트래커 — 혜택을 놓치지 마세요",
+  "start_url": "/card-tracker/",
+  "scope": "/card-tracker/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0d0d12",
+  "theme_color": "#0d0d12",
+  "lang": "ko",
+  "icons": [
+    {
+      "src": "/card-tracker/icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/card-tracker/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["finance", "productivity"],
+  "prefer_related_applications": false
+}

@@ -7,7 +7,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" id="themeColorMeta" content="#0d0d12">
 <meta name="description" content="카드 혜택 트래커 - 신용카드 혜택을 놓치지 마세요">
-<link rel="manifest" id="manifestLink">
+<link rel="manifest" href="/card-tracker/manifest.json">
+<link rel="apple-touch-icon" href="/card-tracker/icon.png">
 <title>카드 트래커</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
 <style>
@@ -1283,50 +1284,38 @@ function dismissInstall(){
   document.getElementById('installBanner').classList.remove('show');
 }
 
-// Inject manifest blob
-(function(){
-  const manifest={
-    name:'카드 트래커',short_name:'카드 트래커',
-    description:'신용카드 혜택 트래커',
-    start_url:'./',display:'standalone',
-    background_color:'#0d0d12',theme_color:'#0d0d12',
-    icons:[
-      {src:"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='32' fill='%230d0d12'/%3E%3Crect x='20' y='56' width='152' height='96' rx='12' fill='%237c6fff'/%3E%3Crect x='20' y='84' width='152' height='20' fill='%23ff6b8a'/%3E%3C/svg%3E",sizes:'192x192',type:'image/svg+xml'},
-      {src:"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='80' fill='%230d0d12'/%3E%3Crect x='50' y='150' width='412' height='260' rx='30' fill='%237c6fff'/%3E%3Crect x='50' y='224' width='412' height='56' fill='%23ff6b8a'/%3E%3C/svg%3E",sizes:'512x512',type:'image/svg+xml'}
-    ]
-  };
-  const blob=new Blob([JSON.stringify(manifest)],{type:'application/json'});
-  const url=URL.createObjectURL(blob);
-  const link=document.createElement('link');
-  link.rel='manifest';link.href=url;
-  document.head.appendChild(link);
-})();
+// ── PWA: Service Worker 등록 ────────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('/card-tracker/sw.js', { scope: '/card-tracker/' })
+      .then(function(reg) {
+        reg.addEventListener('updatefound', function() {
+          const newSW = reg.installing;
+          if (newSW) {
+            newSW.addEventListener('statechange', function() {
+              if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+                newSW.postMessage('SKIP_WAITING');
+              }
+            });
+          }
+        });
+      })
+      .catch(function(e) { console.warn('[SW] 등록 실패:', e); });
 
-// Register Service Worker inline via blob
-(function(){
-  const swCode=`
-const CACHE='card-tracker-v5';
-const ASSETS=[self.location.href.replace(/sw\\.js.*/,'')];
-self.addEventListener('install',e=>{
-  e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting()));
+    navigator.serviceWorker.addEventListener('message', function(e) {
+      if (e.data === 'DO_SYNC') {
+        // 온라인 복구 시 JSONBin 동기화
+        if (typeof syncFromCloud === 'function') syncFromCloud();
+      }
+    });
+  });
+}
+
+// ── 온/오프라인 감지 ─────────────────────────────────────────
+window.addEventListener('online', function() {
+  if (typeof syncFromCloud === 'function') syncFromCloud();
 });
-self.addEventListener('activate',e=>{
-  e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));
-});
-self.addEventListener('fetch',e=>{
-  if(e.request.method!=='GET')return;
-  e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(res=>{
-    const clone=res.clone();
-    caches.open(CACHE).then(c=>c.put(e.request,clone));
-    return res;
-  }).catch(()=>caches.match(e.request))));
-});`;
-  if('serviceWorker' in navigator){
-    const blob=new Blob([swCode],{type:'application/javascript'});
-    const url=URL.createObjectURL(blob);
-    navigator.serviceWorker.register(url,{scope:'./'}).catch(()=>{});
-  }
-})();
+
 
 // ═══════════════════════════════════════════════════════
 //  PERIOD FILTER
